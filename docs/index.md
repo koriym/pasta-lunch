@@ -3,40 +3,31 @@ layout: default
 title: Home
 ---
 
-# Spaghetti Code Detection
+# Pasta Lunch
 
-Detect tangled, complex code using PHPMD metrics.
-
-## Spaghetti Levels
-
-| | Level | Meaning |
-|---|-------|---------|
-| 🍝 | Piccolo | 軽くて消化しやすい |
-| 🍝🍝 | Medio | 標準的な一皿 |
-| 🍝🍝🍝 | Grande | お腹いっぱい |
-| 🍝🍝🍝🍝 | Mamma Mia! | 食べきれない！ |
+Detect spaghetti code using PHPMD metrics.
 
 ## Issue Types
 
 ### Coupling
 
-- [CouplingBetweenObjects](issues/en/coupling-between-objects) - Too many dependencies
+- [CouplingBetweenObjects (CBO)](issues/en/coupling-between-objects) - Too many dependencies in a class
 
 ### Complexity
 
-- [CyclomaticComplexity](issues/en/cyclomatic-complexity) - Too many branches
+- [CyclomaticComplexity (CC)](issues/en/cyclomatic-complexity) - Too many branches in a method
 - [NPathComplexity](issues/en/npath-complexity) - Too many execution paths
-- [ExcessiveClassComplexity](issues/en/excessive-class-complexity) - Class too complex
+- [ExcessiveClassComplexity (ECC)](issues/en/excessive-class-complexity) - Overall class is too complex
 
 ### Debug Code
 
-- [DevelopmentCodeFragment](issues/en/development-code-fragment) - Debug code in production
+- [DevelopmentCodeFragment](issues/en/development-code-fragment) - Debug code left in production
 
 ## Quick Start
 
 ```bash
-php -d error_reporting=E_ERROR \
-  ./vendor/bin/phpmd src/Resource,src/Service,src/Helper text codesize,design
+composer require --dev koriym/pasta-lunch
+./vendor/bin/pasta-lunch src/
 ```
 
 ## References

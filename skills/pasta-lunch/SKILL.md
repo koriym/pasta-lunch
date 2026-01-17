@@ -83,7 +83,7 @@ For files with Mamma Mia! level, provide details:
 - NPathComplexity: 444 in `validateOrderItems()` (threshold: 200)
 
 **Recommendation:**
-検索パラメータの変換処理を `OrderProcessor` クラスに抽出してください。
+注文処理ロジックを `OrderProcessor` クラスに抽出してください。
 ```
 
 #### Part 3: Legend and References
