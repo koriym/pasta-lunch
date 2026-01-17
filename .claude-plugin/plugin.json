@@ -1,0 +1,14 @@
+{
+  "name": "pasta-lunch",
+  "description": "Detect spaghetti code using PHPMD metrics. Measures CBO, CC, NPath to identify refactoring targets.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Akihito Koriyama",
+    "email": "akihito.koriyama@gmail.com"
+  },
+  "homepage": "https://koriym.github.io/pasta-lunch/",
+  "repository": "https://github.com/koriym/pasta-lunch",
+  "license": "MIT",
+  "keywords": ["php", "phpmd", "spaghetti", "code-quality", "complexity", "refactoring"],
+  "skills": "./skills/"
+}
