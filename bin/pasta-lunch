@@ -12,7 +12,7 @@ declare(strict_types=1);
  *          ./bin/spaghetti src --format=html > report.html
  */
 
-// Thresholds for each level [Piccolo, Normale, Grande] - above Grande = Mamma Mia!
+// Thresholds for each level [Piccolo, Medio, Grande] - above Grande = Mamma Mia!
 const THRESHOLDS = [
     'CouplingBetweenObjects' => [10, 13, 17],  // CBO: ≤10, 11-13, 14-17, 18+
     'CyclomaticComplexity' => [10, 15, 20],    // CC: ≤10, 11-15, 16-20, 21+
@@ -26,7 +26,7 @@ const THRESHOLDS = [
 
 const LEVELS = [
     1 => ['emoji' => '🍝', 'name' => 'Piccolo'],
-    2 => ['emoji' => '🍝🍝', 'name' => 'Normale'],
+    2 => ['emoji' => '🍝🍝', 'name' => 'Medio'],
     3 => ['emoji' => '🍝🍝🍝', 'name' => 'Grande'],
     4 => ['emoji' => '🍝🍝🍝🍝', 'name' => 'Mamma Mia!'],
 ];
@@ -196,7 +196,7 @@ function printMarkdown(array $data): void
     echo "| Level | | Files |\n|-------|---|-------|\n";
     echo "| 🍝🍝🍝🍝 Mamma Mia! | ⚠️⚠️ Unmaintainable | {$counts[4]} |\n";
     echo "| 🍝🍝🍝 Grande | ⚠️ Refactoring required | {$counts[3]} |\n";
-    echo "| 🍝🍝 Normale | Acceptable | {$counts[2]} |\n";
+    echo "| 🍝🍝 Medio | Acceptable | {$counts[2]} |\n";
     echo "| 🍝 Piccolo | Clean code | {$counts[1]} |\n\n";
     echo "**Metrics:** CBO=CouplingBetweenObjects, CC=CyclomaticComplexity, NPath=NPathComplexity, ECC=ExcessiveClassComplexity\n";
 }

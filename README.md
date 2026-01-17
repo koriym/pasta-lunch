@@ -59,13 +59,13 @@ Add to your project's `composer.json`:
 | | Level | Meaning |
 |---|-------|---------|
 | 🍝 | Piccolo | Clean code |
-| 🍝🍝 | Normale | Acceptable |
+| 🍝🍝 | Medio | Acceptable |
 | 🍝🍝🍝 | Grande | Refactoring required |
 | 🍝🍝🍝🍝 | Mamma Mia! | Unmaintainable |
 
 ## Metrics
 
-| Metric | Piccolo | Normale | Grande | Mamma Mia! |
+| Metric | Piccolo | Medio | Grande | Mamma Mia! |
 |--------|---------|---------|--------|------------|
 | CyclomaticComplexity (CC) | ≤10 | 11-15 | 16-20 | 21+ |
 | NPathComplexity | ≤50 | 51-200 | 201-500 | 501+ |

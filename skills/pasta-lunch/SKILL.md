@@ -40,13 +40,13 @@ php -d error_reporting=E_ERROR ./vendor/bin/phpmd src/Resource text codesize,des
 | | Level | Meaning |
 |---|-------|---------|
 | 🍝 | Piccolo | Clean code |
-| 🍝🍝 | Normale | Acceptable |
+| 🍝🍝 | Medio | Acceptable |
 | 🍝🍝🍝 | Grande | Refactoring required |
 | 🍝🍝🍝🍝 | Mamma Mia! | Unmaintainable |
 
 Grade thresholds:
 
-| Metric | Piccolo | Normale | Grande | Mamma Mia! |
+| Metric | Piccolo | Medio | Grande | Mamma Mia! |
 |--------|---------|---------|--------|------------|
 | CC | ≤10 | 11-15 | 16-20 | 21+ |
 | NPath | ≤50 | 51-200 | 201-500 | 501+ |
@@ -66,7 +66,7 @@ Present results in two parts:
 |------|-------|---------|
 | Service/OrderService.php | 🍝🍝🍝🍝 Mamma Mia! | 複数の責務が混在しています |
 | Helper/DateHelper.php | 🍝🍝🍝 Grande | 処理が集中しています |
-| Resource/App/User.php | 🍝🍝 Normale | 許容範囲内です |
+| Resource/App/User.php | 🍝🍝 Medio | 許容範囲内です |
 | Resource/App/Index.php | 🍝 Piccolo | きれいに整理されています |
 ```
 
@@ -94,7 +94,7 @@ For files with Mamma Mia! level, provide details:
 | | Level |
 |---|-------|
 | 🍝 | Piccolo - 軽くて消化しやすい |
-| 🍝🍝 | Normale - 標準的な一皿 |
+| 🍝🍝 | Medio - 標準的な一皿 |
 | 🍝🍝🍝 | Grande - お腹いっぱい |
 | 🍝🍝🍝🍝 | Mamma Mia! - 食べきれない！ |
 
