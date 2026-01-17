@@ -1,0 +1,13 @@
+title: Pasta Lunch
+description: Spaghetti code detector using PHPMD metrics
+baseurl: "/pasta-lunch"
+url: "https://koriym.github.io"
+theme: minima
+
+header_pages: []
+
+defaults:
+  - scope:
+      path: "issues"
+    values:
+      nav_exclude: true

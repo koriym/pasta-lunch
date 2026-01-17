@@ -1,0 +1,21 @@
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  var path = window.location.pathname;
+  var base = '/pasta-lunch';
+
+  if (e.key === 'j') {
+    if (path.includes('/en/')) {
+      window.location.href = path.replace('/en/', '/ja/');
+    } else if (!path.includes('/ja/')) {
+      window.location.href = base + '/issues/ja/';
+    }
+  } else if (e.key === 'e') {
+    if (path.includes('/ja/')) {
+      window.location.href = path.replace('/ja/', '/en/');
+    } else if (!path.includes('/en/')) {
+      window.location.href = base + '/issues/en/';
+    }
+  }
+});
+</script>
