@@ -30,7 +30,7 @@ composer pasta
 # HTML output
 composer pasta:html > report.html
 
-# Direct execution
+# Direct execution (default: markdown, --format=html for HTML)
 ./vendor/bin/pasta-lunch src/Resource
 ./vendor/bin/pasta-lunch --format=html > report.html
 
