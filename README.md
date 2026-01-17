@@ -73,6 +73,8 @@ Add to your project's `composer.json`:
 | CouplingBetweenObjects (CBO) | ≤10 | 11-13 | 14-17 | 18+ |
 | ExcessiveClassComplexity (ECC) | ≤50 | 51-80 | 81-100 | 101+ |
 
+See [Issue Types](https://koriym.github.io/pasta-lunch/) for detailed documentation.
+
 ## License
 
 [MIT](LICENSE)
