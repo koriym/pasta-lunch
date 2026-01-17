@@ -10,8 +10,7 @@
         }
     ],
     "require": {
-        "php": "^8.1",
-        "phpmd/phpmd": "^2.15"
+        "php": "^8.1"
     },
     "bin": [
         "bin/pasta-lunch"
@@ -19,5 +18,8 @@
     "scripts": {
         "pasta": "bin/pasta-lunch",
         "pasta:html": "bin/pasta-lunch --format=html"
+    },
+    "require-dev": {
+        "phpmd/phpmd": "^2.15"
     }
 }

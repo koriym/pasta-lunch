@@ -142,13 +142,11 @@ function getReportData(array $files): array
     }
 
     $counts = [4 => count($grouped[4]), 3 => count($grouped[3]), 2 => count($grouped[2]), 1 => count($grouped[1])];
-    $projectLevel = $counts[4] > 0 ? 4 : ($counts[3] > 0 ? 3 : ($counts[2] > 0 ? 2 : 1));
 
     return [
         'totalFiles' => count($allPhpFiles),
         'grouped' => $grouped,
         'counts' => $counts,
-        'projectLevel' => $projectLevel,
     ];
 }
 
@@ -156,9 +154,8 @@ function printMarkdown(array $data): void
 {
     $grouped = $data['grouped'];
     $counts = $data['counts'];
-    $level = LEVELS[$data['projectLevel']];
 
-    echo "## 🍝 Spaghetti Code Report ({$data['totalFiles']} files)\n\n";
+    echo "## 🍝 Spaghetti Code Detection ({$data['totalFiles']} files)\n\n";
 
     foreach ([4, 3, 2, 1] as $levelNum) {
         $lvl = LEVELS[$levelNum];
@@ -192,21 +189,18 @@ function printMarkdown(array $data): void
         }
     }
 
-    echo "---\n\n### Summary: {$level['emoji']} {$level['name']}\n\n";
+    echo "---\n\n### Summary\n\n";
     echo "| Level | | Files |\n|-------|---|-------|\n";
     echo "| 🍝🍝🍝🍝 Mamma Mia! | ⚠️⚠️ Unmaintainable | {$counts[4]} |\n";
     echo "| 🍝🍝🍝 Grande | ⚠️ Refactoring required | {$counts[3]} |\n";
     echo "| 🍝🍝 Medio | Acceptable | {$counts[2]} |\n";
-    echo "| 🍝 Piccolo | Clean code | {$counts[1]} |\n\n";
-    echo "**Metrics:** CBO=CouplingBetweenObjects, CC=CyclomaticComplexity, NPath=NPathComplexity, ECC=ExcessiveClassComplexity\n";
+    echo "| 🍝 Piccolo | Clean code | {$counts[1]} |\n";
 }
 
 function printHtml(array $data): void
 {
     $grouped = $data['grouped'];
     $counts = $data['counts'];
-    $projectLevel = $data['projectLevel'];
-    $level = LEVELS[$projectLevel];
 
     $css = <<<'CSS'
 :root{--color-mamma-mia:#dc3545;--color-grande:#fd7e14;--color-normale:#ffc107;--color-piccolo:#28a745;--color-bg:#fff;--color-bg-secondary:#f6f8fa;--color-border:#d0d7de;--color-text:#1f2328;--color-text-muted:#656d76;--color-link:#0969da}
@@ -215,8 +209,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helveti
 h1{font-size:2em;border-bottom:1px solid var(--color-border);padding-bottom:.3em}
 h2{font-size:1.5em;border-bottom:1px solid var(--color-border);padding-bottom:.3em;margin-top:24px}
 h3{font-size:1.25em;margin-top:24px}
-.summary-card{background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:6px;padding:16px;margin:16px 0}
-.project-level{font-size:1.5em;font-weight:600;display:flex;align-items:center;gap:8px}
 .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:500;color:#fff}
 .badge-4{background:var(--color-mamma-mia)}
 .badge-3{background:var(--color-grande)}
@@ -249,16 +241,13 @@ tr:hover{background:var(--color-bg-secondary)}
 .detail-card{background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;margin:12px 0}
 .detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .detail-path{font-family:monospace;font-weight:600}
-.metrics-legend{margin-top:24px;padding:12px;background:var(--color-bg-secondary);border-radius:6px;font-size:12px;color:var(--color-text-muted)}
 .remaining{color:var(--color-text-muted);font-style:italic}
 CSS;
 
     echo "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
     echo "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n";
-    echo "<title>🍝 Spaghetti Code Report</title>\n<style>{$css}</style>\n</head>\n<body>\n";
-    echo "<h1>🍝 Spaghetti Code Report</h1>\n<p>{$data['totalFiles']} files analyzed</p>\n";
-    echo "<div class=\"summary-card\"><div class=\"project-level\">Project Level: {$level['emoji']} {$level['name']} ";
-    echo "<span class=\"badge badge-{$projectLevel}\">" . LEVEL_BADGES[$projectLevel] . "</span></div></div>\n";
+    echo "<title>🍝 Spaghetti Code Detection</title>\n<style>{$css}</style>\n</head>\n<body>\n";
+    echo "<h1>🍝 Spaghetti Code Detection</h1>\n<p>{$data['totalFiles']} files analyzed</p>\n";
 
     $total = $data['totalFiles'];
     echo "<table><thead><tr><th>Level</th><th>Status</th><th>Files</th></tr></thead><tbody>\n";
@@ -274,7 +263,7 @@ CSS;
         $count = count($grouped[$levelNum]);
         if ($count === 0) continue;
 
-        echo "<div class=\"level-section level-{$levelNum}\"><h3>{$lvl['emoji']} {$lvl['name']} ({$count})</h3>\n";
+        echo "<div class=\"level-section level-{$levelNum}\"><h3><span class=\"pasta\">{$lvl['emoji']}</span> {$lvl['name']} ({$count})</h3>\n";
         if ($levelNum === 1) {
             echo "<p class=\"remaining\">(Remaining files)</p></div>\n";
             continue;
@@ -312,7 +301,6 @@ CSS;
         }
     }
 
-    echo "<div class=\"metrics-legend\"><strong>Metrics:</strong> CBO=CouplingBetweenObjects, CC=CyclomaticComplexity, NPath=NPathComplexity, ECC=ExcessiveClassComplexity</div>\n";
     echo "</body></html>\n";
 }
 
@@ -353,8 +341,8 @@ $output = shell_exec($cmd) ?? '';
 
 if (empty(trim($output))) {
     echo $format === 'html'
-        ? "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>🍝 All clean!</h1><p>No spaghetti detected.</p></body></html>\n"
-        : "## 🍝 Spaghetti Code Detection Results\n\n✨ All clean! No spaghetti detected.\n";
+        ? "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>🍝 Spaghetti Code Detection</h1><p>All clean! No issues detected.</p></body></html>\n"
+        : "## 🍝 Spaghetti Code Detection\n\n✨ All clean! No issues detected.\n";
     exit(0);
 }
 
