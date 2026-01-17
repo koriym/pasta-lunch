@@ -97,11 +97,11 @@ For files with Mamma Mia! level, provide details:
 
 ### References
 
-- [CouplingBetweenObjects](https://bearsunday.github.io/pasta-lunch/issues/en/coupling-between-objects)
-- [CyclomaticComplexity](https://bearsunday.github.io/pasta-lunch/issues/en/cyclomatic-complexity)
-- [NPathComplexity](https://bearsunday.github.io/pasta-lunch/issues/en/npath-complexity)
-- [ExcessiveClassComplexity](https://bearsunday.github.io/pasta-lunch/issues/en/excessive-class-complexity)
-- [DevelopmentCodeFragment](https://bearsunday.github.io/pasta-lunch/issues/en/development-code-fragment)
+- [CouplingBetweenObjects](https://koriym.github.io/pasta-lunch/issues/en/coupling-between-objects)
+- [CyclomaticComplexity](https://koriym.github.io/pasta-lunch/issues/en/cyclomatic-complexity)
+- [NPathComplexity](https://koriym.github.io/pasta-lunch/issues/en/npath-complexity)
+- [ExcessiveClassComplexity](https://koriym.github.io/pasta-lunch/issues/en/excessive-class-complexity)
+- [DevelopmentCodeFragment](https://koriym.github.io/pasta-lunch/issues/en/development-code-fragment)
 ```
 
 ## Fix Patterns

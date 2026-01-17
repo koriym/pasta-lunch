@@ -5,7 +5,7 @@ Detect spaghetti code using PHPMD metrics.
 ## Installation
 
 ```bash
-composer require --dev bearsunday/pasta-lunch
+composer require --dev koriym/pasta-lunch
 ```
 
 ## Usage
