@@ -12,12 +12,12 @@ declare(strict_types=1);
  *          ./bin/spaghetti src --format=html > report.html
  */
 
-// Thresholds for each level
+// Thresholds for each level [Piccolo, Normale, Grande] - above Grande = Mamma Mia!
 const THRESHOLDS = [
-    'CouplingBetweenObjects' => [10, 13, 17],
-    'CyclomaticComplexity' => [7, 10, 15],
-    'NPathComplexity' => [100, 200, 500],
-    'ExcessiveClassComplexity' => [30, 50, 80],
+    'CouplingBetweenObjects' => [10, 13, 17],  // CBO: ≤10, 11-13, 14-17, 18+
+    'CyclomaticComplexity' => [10, 15, 20],    // CC: ≤10, 11-15, 16-20, 21+
+    'NPathComplexity' => [50, 200, 500],       // NPath: ≤50, 51-200, 201-500, 501+
+    'ExcessiveClassComplexity' => [50, 80, 100],// ECC: ≤50, 51-80, 81-100, 101+
     'ExcessiveMethodLength' => [50, 100, 150],
     'ExcessiveParameterList' => [5, 10, 15],
     'TooManyFields' => [10, 15, 20],
@@ -32,14 +32,14 @@ const LEVELS = [
 ];
 
 const METRIC_THRESHOLDS = [
-    'CouplingBetweenObjects' => 13,
+    'CouplingBetweenObjects' => 10,
     'CyclomaticComplexity' => 10,
-    'NPathComplexity' => 200,
+    'NPathComplexity' => 50,
     'ExcessiveClassComplexity' => 50,
-    'ExcessiveMethodLength' => 100,
-    'ExcessiveParameterList' => 10,
-    'TooManyFields' => 15,
-    'TooManyPublicMethods' => 10,
+    'ExcessiveMethodLength' => 50,
+    'ExcessiveParameterList' => 5,
+    'TooManyFields' => 12,
+    'TooManyPublicMethods' => 12,
 ];
 
 const LEVEL_BADGES = [

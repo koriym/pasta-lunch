@@ -30,25 +30,28 @@ php -d error_reporting=E_ERROR ./vendor/bin/phpmd src/Resource text codesize,des
 
 | Metric | Meaning | Threshold | Problem |
 |--------|---------|-----------|---------|
-| **CouplingBetweenObjects (CBO)** | Number of dependencies | 13 | Too many responsibilities, needs Service extraction |
 | **CyclomaticComplexity (CC)** | Branching complexity | 10 | Logic should be delegated to Domain layer |
-| **NPathComplexity** | Execution paths | 200 | Hard to test, bug-prone |
-| **ExcessiveClassComplexity** | Overall class complexity | 50 | Class needs splitting |
+| **NPathComplexity** | Execution paths | 50 | Hard to test, bug-prone |
+| **CouplingBetweenObjects (CBO)** | Number of dependencies | 10 | Too many responsibilities, needs Service extraction |
+| **ExcessiveClassComplexity (ECC)** | Overall class complexity | 50 | Class needs splitting |
 
 ### 3. Spaghetti Levels (4-Grade Scale)
 
 | | Level | Meaning |
 |---|-------|---------|
-| 🍝 | Piccolo | 軽くて消化しやすい |
-| 🍝🍝 | Normale | 標準的な一皿 |
-| 🍝🍝🍝 | Grande | お腹いっぱい |
-| 🍝🍝🍝🍝 | Mamma Mia! | 食べきれない！要リファクタリング |
+| 🍝 | Piccolo | Clean code |
+| 🍝🍝 | Normale | Acceptable |
+| 🍝🍝🍝 | Grande | Refactoring required |
+| 🍝🍝🍝🍝 | Mamma Mia! | Unmaintainable |
 
 Grade thresholds:
-- **CBO**: Piccolo(≤10), Normale(11-13), Grande(14-17), Mamma Mia!(18+)
-- **CC**: Piccolo(≤7), Normale(8-10), Grande(11-15), Mamma Mia!(16+)
-- **NPath**: Piccolo(≤100), Normale(101-200), Grande(201-500), Mamma Mia!(501+)
-- **ECC**: Piccolo(≤30), Normale(31-50), Grande(51-80), Mamma Mia!(81+)
+
+| Metric | Piccolo | Normale | Grande | Mamma Mia! |
+|--------|---------|---------|--------|------------|
+| CC | ≤10 | 11-15 | 16-20 | 21+ |
+| NPath | ≤50 | 51-200 | 201-500 | 501+ |
+| CBO | ≤10 | 11-13 | 14-17 | 18+ |
+| ECC | ≤50 | 51-80 | 81-100 | 101+ |
 
 ### 4. Output Format
 

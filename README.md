@@ -65,12 +65,12 @@ Add to your project's `composer.json`:
 
 ## Metrics
 
-| Metric | Threshold | Problem |
-|--------|-----------|---------|
-| CouplingBetweenObjects (CBO) | 13 | Too many dependencies |
-| CyclomaticComplexity (CC) | 10 | Too many branches |
-| NPathComplexity | 200 | Too many execution paths |
-| ExcessiveClassComplexity (ECC) | 50 | Class too complex |
+| Metric | Piccolo | Normale | Grande | Mamma Mia! |
+|--------|---------|---------|--------|------------|
+| CyclomaticComplexity (CC) | ≤10 | 11-15 | 16-20 | 21+ |
+| NPathComplexity | ≤50 | 51-200 | 201-500 | 501+ |
+| CouplingBetweenObjects (CBO) | ≤10 | 11-13 | 14-17 | 18+ |
+| ExcessiveClassComplexity (ECC) | ≤50 | 51-80 | 81-100 | 101+ |
 
 ## License
 
