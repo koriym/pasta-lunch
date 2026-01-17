@@ -9,10 +9,11 @@ Detect spaghetti code using PHPMD metrics.
 
 ## Installation
 
-### As Claude Code Skill
+### As Claude Code Plugin
 
-```bash
-claude mcp add-skill koriym/pasta-lunch
+```text
+/plugin marketplace add koriym/pasta-lunch
+/plugin install pasta-lunch@pasta-lunch
 ```
 
 ### Via Composer
