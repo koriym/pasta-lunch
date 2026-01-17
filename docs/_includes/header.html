@@ -6,7 +6,7 @@
     <a class="site-title" rel="author" href="{{ '/issues/en/' | relative_url }}"><strong>{{ site.title | escape }}</strong></a>
     {% endif %}
     <nav class="site-nav">
-      <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+      <input type="checkbox" id="nav-trigger" class="nav-trigger" aria-label="Toggle navigation" aria-controls="site-nav-menu" />
       <label for="nav-trigger">
         <span class="menu-icon">
           <svg viewBox="0 0 18 15" width="18px" height="15px">
@@ -14,7 +14,7 @@
           </svg>
         </span>
       </label>
-      <div class="trigger">
+      <div class="trigger" id="site-nav-menu">
         <a class="page-link" href="{{ page.url | replace: '/ja/', '/en/' | relative_url }}">English</a>
         <a class="page-link" href="{{ page.url | replace: '/en/', '/ja/' | relative_url }}">日本語</a>
       </div>

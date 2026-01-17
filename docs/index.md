@@ -12,7 +12,7 @@ Detect tangled, complex code using PHPMD metrics.
 | | Level | Meaning |
 |---|-------|---------|
 | 🍝 | Piccolo | 軽くて消化しやすい |
-| 🍝🍝 | Normale | 標準的な一皿 |
+| 🍝🍝 | Medio | 標準的な一皿 |
 | 🍝🍝🍝 | Grande | お腹いっぱい |
 | 🍝🍝🍝🍝 | Mamma Mia! | 食べきれない！ |
 

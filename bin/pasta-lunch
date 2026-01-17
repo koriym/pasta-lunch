@@ -67,7 +67,7 @@ function getMetricLink(string $metric, string $format): string
     }
     $url = DOCS_BASE_URL . $slug;
     if ($format === 'html') {
-        return "<a href=\"{$url}\" target=\"_blank\">{$metric}</a>";
+        return "<a href=\"{$url}\" target=\"_blank\" rel=\"noopener noreferrer\">{$metric}</a>";
     }
     return "[{$metric}]({$url})";
 }

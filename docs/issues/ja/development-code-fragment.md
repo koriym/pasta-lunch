@@ -76,5 +76,5 @@ class Import extends ResourceObject
 pre-commitフックまたはCIチェックを追加する：
 
 ```bash
-git diff --cached --name-only | xargs grep -l 'var_dump\|print_r' && exit 1
+git grep --cached -nE 'var_dump|print_r|debug_print_backtrace|debug_zval_dump' -- '*.php' && exit 1
 ```

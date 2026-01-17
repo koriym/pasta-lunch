@@ -75,5 +75,5 @@ class Import extends ResourceObject
 Add a pre-commit hook or CI check:
 
 ```bash
-git diff --cached --name-only | xargs grep -l 'var_dump\|print_r' && exit 1
+git grep --cached -nE 'var_dump|print_r|debug_print_backtrace|debug_zval_dump' -- '*.php' && exit 1
 ```
