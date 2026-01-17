@@ -100,6 +100,7 @@ For files with Mamma Mia! level, provide details:
 
 ### References
 
+- [Issue Types](https://koriym.github.io/pasta-lunch/issues/en/)
 - [CouplingBetweenObjects](https://koriym.github.io/pasta-lunch/issues/en/coupling-between-objects)
 - [CyclomaticComplexity](https://koriym.github.io/pasta-lunch/issues/en/cyclomatic-complexity)
 - [NPathComplexity](https://koriym.github.io/pasta-lunch/issues/en/npath-complexity)

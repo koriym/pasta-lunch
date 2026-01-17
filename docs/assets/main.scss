@@ -1,0 +1,192 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+body {
+  line-height: 1.7;
+  letter-spacing: normal;
+}
+
+h1 {
+  font-size: 2.2em;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+  letter-spacing: normal;
+}
+
+h2 {
+  font-size: 1.8em;
+  line-height: 1.3;
+  margin-top: 1em;
+  margin-bottom: 0.6em;
+  letter-spacing: normal;
+  font-weight: bold;
+}
+
+h3 {
+  font-size: 1.4em;
+  line-height: 1.3;
+  margin-top: 0.9em;
+  margin-bottom: 0.5em;
+  letter-spacing: normal;
+}
+
+p {
+  margin-bottom: 1.4em;
+}
+
+blockquote {
+  font-style: normal;
+  font-size: 1.02em;
+  color: #666;
+  letter-spacing: normal;
+  line-height: 1.6;
+}
+
+.site-title strong {
+  font-weight: 700;
+}
+
+/* ===========================
+   php.net inspired style Syntax (from BEAR.Sunday manual)
+   =========================== */
+
+.highlight {
+    background: #f5f5f1 !important;
+    color: #0b3da6 !important;
+    border-radius: 6px;
+}
+
+.highlight pre {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    tab-size: 2;
+    line-height: 1.5;
+    background: #f5f5f1 !important;
+}
+
+.highlight code {
+    background: #f5f5f1 !important;
+}
+
+/* Comments */
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs,
+.highlight .cp {
+    color: #bb5200 !important;
+    font-style: normal !important;
+}
+
+/* Strings */
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr {
+    color: #c62828 !important;
+}
+
+/* Keywords */
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt {
+    color: #1a7f37 !important;
+    font-weight: normal !important;
+}
+
+/* Numbers */
+.highlight .m,
+.highlight .mi,
+.highlight .mf,
+.highlight .mh,
+.highlight .mo,
+.highlight .il {
+    color: #0a7a7a !important;
+}
+
+/* Default (identifiers, operators, namespaces, etc.) */
+.highlight .n,
+.highlight .na,
+.highlight .nb,
+.highlight .bp,
+.highlight .nc,
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi,
+.highlight .nn,
+.highlight .nx,
+.highlight .nt,
+.highlight .o,
+.highlight .w {
+    color: #0b3da6 !important;
+}
+
+/* Punctuation */
+.highlight .p {
+    color: #222222 !important;
+}
+
+/* Functions / attributes */
+.highlight .nf,
+.highlight .nd {
+    color: #0b3da6 !important;
+    font-weight: normal !important;
+}
+
+/* Class names */
+.highlight .nc {
+    color: #0b3da6 !important;
+    font-weight: normal !important;
+}
+
+/* Exception names */
+.highlight .ne {
+    color: #6b1b1b !important;
+    font-weight: normal !important;
+}
+
+/* Generic (diff, error, headings, etc.) */
+.highlight .gd {
+    color: #000 !important;
+    background: #ffdddd !important;
+}
+.highlight .gi {
+    color: #000 !important;
+    background: #ddffdd !important;
+}
+.highlight .gr,
+.highlight .gt {
+    color: #aa0000 !important;
+}
+.highlight .gh,
+.highlight .gu {
+    color: #9aa0a6 !important;
+}
+.highlight .go {
+    color: #888888 !important;
+}
+.highlight .gp {
+    color: #555555 !important;
+}
+.highlight .gs {
+    font-weight: bold !important;
+}
+.highlight .ge {
+    font-style: italic !important;
+}

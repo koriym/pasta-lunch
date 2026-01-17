@@ -49,6 +49,29 @@ const LEVEL_BADGES = [
     1 => 'Clean code',
 ];
 
+const DOCS_BASE_URL = 'https://koriym.github.io/pasta-lunch/issues/en/';
+
+const METRIC_DOCS = [
+    'CouplingBetweenObjects' => 'coupling-between-objects',
+    'CyclomaticComplexity' => 'cyclomatic-complexity',
+    'NPathComplexity' => 'npath-complexity',
+    'ExcessiveClassComplexity' => 'excessive-class-complexity',
+    'DevelopmentCodeFragment' => 'development-code-fragment',
+];
+
+function getMetricLink(string $metric, string $format): string
+{
+    $slug = METRIC_DOCS[$metric] ?? null;
+    if ($slug === null) {
+        return $metric;
+    }
+    $url = DOCS_BASE_URL . $slug;
+    if ($format === 'html') {
+        return "<a href=\"{$url}\" target=\"_blank\" rel=\"noopener noreferrer\">{$metric}</a>";
+    }
+    return "[{$metric}]({$url})";
+}
+
 function getLevel(string $metric, int $value): int
 {
     if (!isset(THRESHOLDS[$metric])) {
@@ -182,7 +205,8 @@ function printMarkdown(array $data): void
                 if ($issue['level'] >= 2) {
                     $threshold = METRIC_THRESHOLDS[$issue['metric']] ?? '?';
                     $lineInfo = $issue['line'] > 0 ? ":L{$issue['line']}" : "";
-                    echo "- {$issue['metric']}: {$issue['value']}({$threshold}){$lineInfo}\n";
+                    $metricLink = getMetricLink($issue['metric'], 'md');
+                    echo "- {$metricLink}: {$issue['value']}({$threshold}){$lineInfo}\n";
                 }
             }
             echo "\n";
@@ -201,6 +225,7 @@ function printHtml(array $data): void
 {
     $grouped = $data['grouped'];
     $counts = $data['counts'];
+    $timestamp = date('Y-m-d H:i:s');
 
     $css = <<<'CSS'
 :root{--color-mamma-mia:#dc3545;--color-grande:#fd7e14;--color-normale:#ffc107;--color-piccolo:#28a745;--color-bg:#fff;--color-bg-secondary:#f6f8fa;--color-border:#d0d7de;--color-text:#1f2328;--color-text-muted:#656d76;--color-link:#0969da}
@@ -242,12 +267,40 @@ tr:hover{background:var(--color-bg-secondary)}
 .detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .detail-path{font-family:monospace;font-weight:600}
 .remaining{color:var(--color-text-muted);font-style:italic}
+.meta{color:var(--color-text-muted);font-size:12px;margin-top:4px}
+.view-toggle{display:flex;gap:8px;margin-bottom:16px}
+.view-btn{padding:6px 16px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);cursor:pointer;font-size:14px;transition:all 0.2s}
+.view-btn:hover{background:var(--color-bg-secondary)}
+.view-btn.active{background:var(--color-link);color:#fff;border-color:var(--color-link)}
+.view-section{display:none}
+.view-section.active{display:block}
+.issue-type-card{background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;margin:12px 0}
+.issue-type-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-border)}
+.issue-type-name{font-weight:600;font-size:1.1em}
+.issue-type-name a{color:var(--color-link);text-decoration:none}
+.issue-type-name a:hover{text-decoration:underline}
+.issue-count{background:var(--color-bg-secondary);padding:2px 8px;border-radius:10px;font-size:12px}
+.file-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--color-bg-secondary);font-family:monospace;font-size:13px}
+.file-item:last-child{border-bottom:none}
+.file-item-path{color:var(--color-text)}
+.file-item-value{color:var(--color-mamma-mia);font-weight:500}
 CSS;
+
+    $js = <<<'JS'
+function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-view="' + view + '"]').classList.add('active');
+    document.getElementById('view-' + view).classList.add('active');
+}
+JS;
 
     echo "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
     echo "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n";
     echo "<title>🍝 Spaghetti Code Detection</title>\n<style>{$css}</style>\n</head>\n<body>\n";
-    echo "<h1>🍝 Spaghetti Code Detection</h1>\n<p>{$data['totalFiles']} files analyzed</p>\n";
+    echo "<h1>🍝 Spaghetti Code Detection</h1>\n";
+    echo "<p>{$data['totalFiles']} files analyzed</p>\n";
+    echo "<p class=\"meta\">Generated: {$timestamp}</p>\n";
 
     $total = $data['totalFiles'];
     echo "<table><thead><tr><th>Level</th><th>Status</th><th>Files</th></tr></thead><tbody>\n";
@@ -278,7 +331,36 @@ CSS;
 
     $detailFiles = array_merge($grouped[4], $grouped[3], $grouped[2]);
     if (!empty($detailFiles)) {
+        // Collect issues by type
+        $issuesByType = [];
+        foreach ($detailFiles as $file) {
+            $shortPath = preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
+            foreach ($file['issues'] as $issue) {
+                if ($issue['level'] >= 2) {
+                    $metric = $issue['metric'];
+                    if (!isset($issuesByType[$metric])) {
+                        $issuesByType[$metric] = [];
+                    }
+                    $issuesByType[$metric][] = [
+                        'path' => $shortPath,
+                        'value' => $issue['value'],
+                        'line' => $issue['line'],
+                        'level' => $issue['level'],
+                    ];
+                }
+            }
+        }
+        // Sort by count descending
+        uasort($issuesByType, fn($a, $b) => count($b) <=> count($a));
+
         echo "<h2>Details</h2>\n";
+        echo "<div class=\"view-toggle\">\n";
+        echo "<button class=\"view-btn active\" data-view=\"files\" onclick=\"switchView('files')\">by Files</button>\n";
+        echo "<button class=\"view-btn\" data-view=\"issues\" onclick=\"switchView('issues')\">by Issues</button>\n";
+        echo "</div>\n";
+
+        // View by Files
+        echo "<div id=\"view-files\" class=\"view-section active\">\n";
         foreach ($detailFiles as $file) {
             $shortPath = preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
             $id = preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
@@ -292,15 +374,43 @@ CSS;
                 if ($issue['level'] >= 2) {
                     $threshold = METRIC_THRESHOLDS[$issue['metric']] ?? '?';
                     $lineInfo = $issue['line'] > 0 ? "<span class=\"metric-line\">:L{$issue['line']}</span>" : "";
-                    echo "<li class=\"issue-item\"><span class=\"metric-name\">{$issue['metric']}</span>: ";
+                    $metricLink = getMetricLink($issue['metric'], 'html');
+                    echo "<li class=\"issue-item\"><span class=\"metric-name\">{$metricLink}</span>: ";
                     echo "<span class=\"metric-value\">{$issue['value']}</span>";
                     echo "<span class=\"metric-threshold\">({$threshold})</span>{$lineInfo}</li>\n";
                 }
             }
             echo "</ul></div>\n";
         }
+        echo "</div>\n";
+
+        // View by Issues
+        echo "<div id=\"view-issues\" class=\"view-section\">\n";
+        foreach ($issuesByType as $metric => $files) {
+            $metricLink = getMetricLink($metric, 'html');
+            $threshold = METRIC_THRESHOLDS[$metric] ?? '?';
+            $fileCount = count($files);
+            // Sort files by value descending
+            usort($files, fn($a, $b) => $b['value'] <=> $a['value']);
+
+            echo "<div class=\"issue-type-card\">\n";
+            echo "<div class=\"issue-type-header\">\n";
+            echo "<span class=\"issue-type-name\">{$metricLink} <span class=\"metric-threshold\">(threshold: {$threshold})</span></span>\n";
+            echo "<span class=\"issue-count\">{$fileCount} files</span>\n";
+            echo "</div>\n";
+            foreach ($files as $f) {
+                $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : "";
+                echo "<div class=\"file-item\">\n";
+                echo "<span class=\"file-item-path\">" . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
+                echo "<span class=\"file-item-value\">{$f['value']}</span>\n";
+                echo "</div>\n";
+            }
+            echo "</div>\n";
+        }
+        echo "</div>\n";
     }
 
+    echo "<script>{$js}</script>\n";
     echo "</body></html>\n";
 }
 
