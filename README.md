@@ -15,27 +15,43 @@ Detect spaghetti code using PHPMD metrics.
 claude mcp add-skill koriym/pasta-lunch
 ```
 
-### Manual
+### Via Composer
 
 ```bash
-git clone https://github.com/koriym/pasta-lunch.git
-chmod +x pasta-lunch/bin/pasta-lunch
+composer require --dev koriym/pasta-lunch
 ```
 
 ## Usage
 
 ```bash
-# Markdown output
-./bin/pasta-lunch src/Resource
+# Via composer script
+composer pasta
 
 # HTML output
-./bin/pasta-lunch --format=html > report.html
+composer pasta:html > report.html
+
+# Direct execution
+./vendor/bin/pasta-lunch src/Resource
+./vendor/bin/pasta-lunch --format=html > report.html
 
 # Custom exclude patterns (default: *Module.php)
-./bin/pasta-lunch src --exclude="*Module.php,*Test.php"
+./vendor/bin/pasta-lunch src --exclude="*Module.php,*Test.php"
 
 # No exclusions
-./bin/pasta-lunch src --no-exclude
+./vendor/bin/pasta-lunch src --no-exclude
+```
+
+## Composer Scripts
+
+Add to your project's `composer.json`:
+
+```json
+{
+    "scripts": {
+        "pasta": "pasta-lunch",
+        "pasta:html": "pasta-lunch --format=html"
+    }
+}
 ```
 
 ## Spaghetti Levels
