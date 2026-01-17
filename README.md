@@ -1,24 +1,41 @@
-# Pasta Lunch
+# Pasta Lunch 🍝
 
 Detect spaghetti code using PHPMD metrics.
 
+## Requirements
+
+- PHP 8.1+
+- PHPMD (`composer require --dev phpmd/phpmd`)
+
 ## Installation
 
+### As Claude Code Skill
+
 ```bash
-composer require --dev koriym/pasta-lunch
+claude mcp add-skill koriym/pasta-lunch
+```
+
+### Manual
+
+```bash
+git clone https://github.com/koriym/pasta-lunch.git
+chmod +x pasta-lunch/bin/pasta-lunch
 ```
 
 ## Usage
 
 ```bash
 # Markdown output
-./vendor/bin/pasta-lunch src/Resource
+./bin/pasta-lunch src/Resource
 
 # HTML output
-./vendor/bin/pasta-lunch --format=html > report.html
+./bin/pasta-lunch --format=html > report.html
 
-# Custom exclude patterns
-./vendor/bin/pasta-lunch src --exclude="*Module.php,*Test.php"
+# Custom exclude patterns (default: *Module.php)
+./bin/pasta-lunch src --exclude="*Module.php,*Test.php"
+
+# No exclusions
+./bin/pasta-lunch src --no-exclude
 ```
 
 ## Spaghetti Levels
@@ -37,8 +54,8 @@ composer require --dev koriym/pasta-lunch
 | CouplingBetweenObjects (CBO) | 13 | Too many dependencies |
 | CyclomaticComplexity (CC) | 10 | Too many branches |
 | NPathComplexity | 200 | Too many execution paths |
-| ExcessiveClassComplexity | 50 | Class too complex |
+| ExcessiveClassComplexity (ECC) | 50 | Class too complex |
 
 ## License
 
-MIT
+[MIT](LICENSE)
