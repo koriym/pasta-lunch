@@ -39,5 +39,6 @@ composer require --dev koriym/pasta-lunch
 
 ## References
 
+- [GitHub Repository](https://github.com/koriym/pasta-lunch)
 - [PHPMD Code Size Rules](https://phpmd.org/rules/codesize.html)
 - [PHPMD Design Rules](https://phpmd.org/rules/design.html)

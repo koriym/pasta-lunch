@@ -3,6 +3,8 @@ description: Spaghetti code detector using PHPMD metrics
 baseurl: "/pasta-lunch"
 url: "https://koriym.github.io"
 theme: minima
+github:
+  repository_url: https://github.com/koriym/pasta-lunch
 
 header_pages: []
 
