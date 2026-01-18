@@ -14,14 +14,14 @@ declare(strict_types=1);
 
 // Thresholds for each level [Piccolo, Medio, Grande] - above Grande = Mamma Mia!
 const THRESHOLDS = [
-    'CouplingBetweenObjects' => [10, 13, 17],  // CBO: ≤10, 11-13, 14-17, 18+
-    'CyclomaticComplexity' => [10, 15, 20],    // CC: ≤10, 11-15, 16-20, 21+
-    'NPathComplexity' => [50, 200, 500],       // NPath: ≤50, 51-200, 201-500, 501+
-    'ExcessiveClassComplexity' => [50, 80, 100],// ECC: ≤50, 51-80, 81-100, 101+
-    'ExcessiveMethodLength' => [50, 100, 150],
-    'ExcessiveParameterList' => [5, 10, 15],
-    'TooManyFields' => [10, 15, 20],
-    'TooManyPublicMethods' => [10, 15, 20],
+    'CouplingBetweenObjects' => [10, 15, 20],   // CBO: ≤10, 11-15, 16-20, 21+
+    'CyclomaticComplexity' => [10, 15, 20],     // CC: ≤10, 11-15, 16-20, 21+
+    'NPathComplexity' => [100, 200, 500],       // NPath: ≤100, 101-200, 201-500, 501+
+    'ExcessiveClassComplexity' => [50, 80, 120],// ECC: ≤50, 51-80, 81-120, 121+
+    'ExcessiveMethodLength' => [50, 100, 150],  // ≤50, 51-100, 101-150, 151+
+    'ExcessiveParameterList' => [5, 10, 15],    // ≤5, 6-10, 11-15, 16+
+    'TooManyFields' => [10, 15, 20],            // ≤10, 11-15, 16-20, 21+
+    'TooManyPublicMethods' => [10, 15, 20],     // ≤10, 11-15, 16-20, 21+
 ];
 
 const LEVELS = [
@@ -34,12 +34,12 @@ const LEVELS = [
 const METRIC_THRESHOLDS = [
     'CouplingBetweenObjects' => 10,
     'CyclomaticComplexity' => 10,
-    'NPathComplexity' => 50,
+    'NPathComplexity' => 100,
     'ExcessiveClassComplexity' => 50,
     'ExcessiveMethodLength' => 50,
     'ExcessiveParameterList' => 5,
-    'TooManyFields' => 12,
-    'TooManyPublicMethods' => 12,
+    'TooManyFields' => 10,
+    'TooManyPublicMethods' => 10,
 ];
 
 const LEVEL_BADGES = [
