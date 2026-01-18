@@ -56,6 +56,10 @@ const METRIC_DOCS = [
     'CyclomaticComplexity' => 'cyclomatic-complexity',
     'NPathComplexity' => 'npath-complexity',
     'ExcessiveClassComplexity' => 'excessive-class-complexity',
+    'ExcessiveMethodLength' => 'excessive-method-length',
+    'ExcessiveParameterList' => 'excessive-parameter-list',
+    'TooManyFields' => 'too-many-fields',
+    'TooManyPublicMethods' => 'too-many-public-methods',
     'DevelopmentCodeFragment' => 'development-code-fragment',
 ];
 

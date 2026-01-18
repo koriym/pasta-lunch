@@ -72,6 +72,10 @@ Add to your project's `composer.json`:
 | NPathComplexity | ≤50 | 51-200 | 201-500 | 501+ |
 | CouplingBetweenObjects (CBO) | ≤10 | 11-13 | 14-17 | 18+ |
 | ExcessiveClassComplexity (ECC) | ≤50 | 51-80 | 81-100 | 101+ |
+| ExcessiveMethodLength | ≤50 | 51-100 | 101-150 | 151+ |
+| ExcessiveParameterList | ≤5 | 6-10 | 11-15 | 16+ |
+| TooManyFields | ≤10 | 11-15 | 16-20 | 21+ |
+| TooManyPublicMethods | ≤10 | 11-15 | 16-20 | 21+ |
 
 See [Issue Types](https://koriym.github.io/pasta-lunch/) for detailed documentation.
 

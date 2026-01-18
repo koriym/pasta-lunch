@@ -19,6 +19,13 @@ Detect spaghetti code using PHPMD metrics.
 - [NPathComplexity](issues/en/npath-complexity) - Too many execution paths
 - [ExcessiveClassComplexity (ECC)](issues/en/excessive-class-complexity) - Overall class is too complex
 
+### Size
+
+- [ExcessiveMethodLength](issues/en/excessive-method-length) - Method has too many lines
+- [ExcessiveParameterList](issues/en/excessive-parameter-list) - Too many parameters
+- [TooManyFields](issues/en/too-many-fields) - Class has too many fields
+- [TooManyPublicMethods](issues/en/too-many-public-methods) - Class exposes too many methods
+
 ### Debug Code
 
 - [DevelopmentCodeFragment](issues/en/development-code-fragment) - Debug code left in production

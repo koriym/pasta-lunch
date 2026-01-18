@@ -17,6 +17,13 @@ lang: ja
 - [NPathComplexity](npath-complexity) - 実行パスが多すぎる
 - [ExcessiveClassComplexity (ECC)](excessive-class-complexity) - クラス全体が複雑すぎる
 
+## サイズ
+
+- [ExcessiveMethodLength](excessive-method-length) - メソッドの行数が多すぎる
+- [ExcessiveParameterList](excessive-parameter-list) - パラメータが多すぎる
+- [TooManyFields](too-many-fields) - クラスのフィールドが多すぎる
+- [TooManyPublicMethods](too-many-public-methods) - 公開メソッドが多すぎる
+
 ## デバッグコード
 
 - [DevelopmentCodeFragment](development-code-fragment) - 本番環境にデバッグコードが残っている
