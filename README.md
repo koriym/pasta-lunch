@@ -2,6 +2,8 @@
 
 Detect spaghetti code using PHPMD metrics.
 
+Pasta Lunch focuses on **tangled, complex code** - the kind that's hard to test, hard to change, and hard to understand. Unlike general code quality tools, it specifically targets metrics that indicate code entanglement: cyclomatic complexity, coupling, and structural bloat.
+
 ## Requirements
 
 - PHP 8.1+
