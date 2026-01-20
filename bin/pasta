@@ -20,11 +20,18 @@ $autoloadPaths = [
     __DIR__ . '/../../../autoload.php',
 ];
 
+$autoloaderFound = false;
 foreach ($autoloadPaths as $autoload) {
     if (file_exists($autoload)) {
         require $autoload;
+        $autoloaderFound = true;
         break;
     }
+}
+
+if (! $autoloaderFound) {
+    fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install' first.\n");
+    exit(1);
 }
 
 $targetDir = 'src';
