@@ -180,6 +180,27 @@ final class Pasta
      */
     private function buildReportData(array $files, array $targetDirs, array $excludePatterns): array
     {
+        $allPhpFiles = $this->collectAllPhpFiles($targetDirs);
+        $grouped = $this->groupFilesByLevel($files);
+        $filesWithIssues = $this->getFilesWithIssues($files);
+        $this->addCleanFiles($grouped, $allPhpFiles, $filesWithIssues, $excludePatterns);
+
+        /** @var ReportData $result */
+        $result = [
+            'totalFiles' => count($allPhpFiles),
+            'grouped' => $grouped,
+        ];
+
+        return $result;
+    }
+
+    /**
+     * @param list<string> $targetDirs
+     *
+     * @return list<string>
+     */
+    private function collectAllPhpFiles(array $targetDirs): array
+    {
         /** @var list<string> $allPhpFiles */
         $allPhpFiles = [];
         foreach ($targetDirs as $dir) {
@@ -199,37 +220,77 @@ final class Pasta
             }
         }
 
+        return $allPhpFiles;
+    }
+
+    /**
+     * @param array<string, FileData> $files
+     *
+     * @return GroupedFiles
+     */
+    private function groupFilesByLevel(array $files): array
+    {
         /** @var GroupedFiles $grouped */
         $grouped = [4 => [], 3 => [], 2 => [], 1 => []];
+        foreach ($files as $file) {
+            $level = $file['maxLevel'];
+            $grouped[$level][] = $file;
+        }
+
+        /** @var GroupedFiles $result */
+        $result = $grouped;
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, FileData> $files
+     *
+     * @return list<string>
+     */
+    private function getFilesWithIssues(array $files): array
+    {
         /** @var list<string> $filesWithIssues */
         $filesWithIssues = [];
         foreach ($files as $file) {
-            $grouped[$file['maxLevel']][] = $file;
             $realPath = realpath($file['path']);
             $filesWithIssues[] = $realPath !== false ? $realPath : $file['path'];
         }
 
+        return $filesWithIssues;
+    }
+
+    /**
+     * @param GroupedFiles $grouped
+     * @param list<string> $allPhpFiles
+     * @param list<string> $filesWithIssues
+     * @param list<string> $excludePatterns
+     */
+    private function addCleanFiles(array &$grouped, array $allPhpFiles, array $filesWithIssues, array $excludePatterns): void
+    {
         foreach ($allPhpFiles as $phpFile) {
-            $realPath = realpath($phpFile);
-            $found = false;
-            foreach ($filesWithIssues as $issueFile) {
-                if ($realPath === $issueFile || str_ends_with($issueFile, basename($phpFile))) {
-                    $found = true;
-                    break;
-                }
+            if ($this->isFileAlreadyIncluded($phpFile, $filesWithIssues)) {
+                continue;
             }
 
-            if (! $found && ! $this->matchesExcludePattern($phpFile, $excludePatterns)) {
-                $grouped[1][] = ['path' => $phpFile, 'maxLevel' => 1, 'issues' => []];
+            if ($this->matchesExcludePattern($phpFile, $excludePatterns)) {
+                continue;
+            }
+
+            $grouped[1][] = ['path' => $phpFile, 'maxLevel' => 1, 'issues' => []];
+        }
+    }
+
+    /** @param list<string> $filesWithIssues */
+    private function isFileAlreadyIncluded(string $phpFile, array $filesWithIssues): bool
+    {
+        $realPath = realpath($phpFile);
+        foreach ($filesWithIssues as $issueFile) {
+            if ($realPath === $issueFile || str_ends_with($issueFile, basename($phpFile))) {
+                return true;
             }
         }
 
-        /** @var ReportData $result */
-        $result = [
-            'totalFiles' => count($allPhpFiles),
-            'grouped' => $grouped,
-        ];
-
-        return $result;
+        return false;
     }
 }
