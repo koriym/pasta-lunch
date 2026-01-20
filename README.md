@@ -57,8 +57,8 @@ Add to your project's `composer.json`:
 ```json
 {
     "scripts": {
-        "pasta": "pasta",
-        "pasta:html": "pasta --format=html"
+        "pasta": "bin/pasta",
+        "pasta:html": "bin/pasta --format=html"
     }
 }
 ```
