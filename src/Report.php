@@ -6,6 +6,7 @@ namespace Koriym\PastaLunch;
 
 use function array_map;
 use function array_merge;
+use function assert;
 use function count;
 use function date;
 use function file_get_contents;
@@ -191,12 +192,18 @@ final class Report
 
     private function getHtmlCss(): string
     {
-        return (string) file_get_contents(__DIR__ . '/../assets/report.css');
+        $css = file_get_contents(__DIR__ . '/../assets/report.css');
+        assert($css !== false);
+
+        return $css;
     }
 
     private function getHtmlJs(): string
     {
-        return (string) file_get_contents(__DIR__ . '/../assets/report.js');
+        $js = file_get_contents(__DIR__ . '/../assets/report.js');
+        assert($js !== false);
+
+        return $js;
     }
 
     private function buildHtmlHead(string $css, string $timestamp): string
