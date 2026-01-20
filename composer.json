@@ -13,11 +13,11 @@
         "php": "^8.1"
     },
     "bin": [
-        "bin/pasta-lunch"
+        "bin/pasta"
     ],
     "scripts": {
-        "pasta": "bin/pasta-lunch",
-        "pasta:html": "bin/pasta-lunch --format=html"
+        "pasta": "bin/pasta",
+        "pasta:html": "bin/pasta --format=html"
     },
     "require-dev": {
         "phpmd/phpmd": "^2.15"
