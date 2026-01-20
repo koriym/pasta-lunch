@@ -38,8 +38,9 @@ composer pasta
 # HTML output
 composer pasta:html > report.html
 
-# Direct execution (default: markdown, --format=html for HTML)
+# Direct execution (default: text with colors)
 ./vendor/bin/pasta src/Resource
+./vendor/bin/pasta --format=md > report.md
 ./vendor/bin/pasta --format=html > report.html
 
 # Custom exclude patterns (default: *Module.php)
