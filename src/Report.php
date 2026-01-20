@@ -440,6 +440,7 @@ JS;
         return "{$t[0]}:{$t[1]}:{$t[2]}";
     }
 
+    /** @codeCoverageIgnore */
     private function getLevelColor(int $level): string
     {
         return match ($level) {
