@@ -32,14 +32,12 @@ composer require --dev koriym/pasta-lunch
 ## Usage
 
 ```bash
-# Via composer script
+# Via composer script (default target: src)
 composer pasta
-
-# HTML output
 composer pasta:html > report.html
 
-# Direct execution (default: text with colors)
-./vendor/bin/pasta src/Resource
+# Direct execution
+./vendor/bin/pasta
 ./vendor/bin/pasta --format=md > report.md
 ./vendor/bin/pasta --format=html > report.html
 
