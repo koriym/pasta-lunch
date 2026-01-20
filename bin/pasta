@@ -4,12 +4,13 @@
 declare(strict_types=1);
 
 /**
- * Spaghetti Code Detector
+ * PASTA - PHP Alert for Spaghetti Twisted Architecture
  *
- * Usage: ./bin/spaghetti [target_dir] [--exclude=pattern] [--format=md|html]
- * Example: ./bin/spaghetti src/Resource
- *          ./bin/spaghetti src --exclude="*Module.php"
- *          ./bin/spaghetti src --format=html > report.html
+ * Usage: ./bin/pasta [target_dir] [--exclude=pattern] [--format=text|md|html]
+ * Example: ./bin/pasta src/Resource
+ *          ./bin/pasta src --exclude="*Module.php"
+ *          ./bin/pasta src --format=md > report.md
+ *          ./bin/pasta src --format=html > report.html
  */
 
 // Thresholds for each level [Piccolo, Medio, Grande] - above Grande = Mamma Mia!
@@ -49,7 +50,9 @@ const LEVEL_BADGES = [
     1 => 'Clean code',
 ];
 
-const DOCS_BASE_URL = 'https://koriym.github.io/pasta-lunch/issues/en/';
+$lang = getenv('LANG') ?: 'en';
+$docsLocale = str_starts_with($lang, 'ja') ? 'ja' : 'en';
+define('DOCS_BASE_URL', "https://koriym.github.io/pasta-lunch/issues/{$docsLocale}/");
 
 const METRIC_DOCS = [
     'CouplingBetweenObjects' => 'coupling-between-objects',
@@ -223,6 +226,80 @@ function printMarkdown(array $data): void
     echo "| 🍝🍝🍝 Grande | ⚠️ Refactoring required | {$counts[3]} |\n";
     echo "| 🍝🍝 Medio | Acceptable | {$counts[2]} |\n";
     echo "| 🍝 Piccolo | Clean code | {$counts[1]} |\n";
+}
+
+// ANSI color codes
+const COLORS = [
+    'bold_red' => "\033[1;31m",
+    'red' => "\033[31m",
+    'blue' => "\033[34m",
+    'green' => "\033[32m",
+    'reset' => "\033[0m",
+    'bold' => "\033[1m",
+    'dim' => "\033[2m",
+];
+
+function getThresholdsString(string $metric): string
+{
+    if (!isset(THRESHOLDS[$metric])) {
+        return '?';
+    }
+    $t = THRESHOLDS[$metric];
+    return "{$t[0]}:{$t[1]}:{$t[2]}";
+}
+
+function getLevelColor(int $level): string
+{
+    return match($level) {
+        4 => COLORS['bold_red'],
+        3 => COLORS['red'],
+        2 => COLORS['blue'],
+        default => COLORS['green'],
+    };
+}
+
+function printText(array $data): void
+{
+    $grouped = $data['grouped'];
+    $counts = $data['counts'];
+    $useColor = stream_isatty(STDOUT);
+
+    $color = fn(string $c, string $s) => $useColor ? COLORS[$c] . $s . COLORS['reset'] : $s;
+    $levelColor = fn(int $l, string $s) => $useColor ? getLevelColor($l) . $s . COLORS['reset'] : $s;
+
+    echo "\n";
+
+    // Print issues grouped by level (Mamma Mia! first)
+    foreach ([4, 3, 2] as $levelNum) {
+        if (empty($grouped[$levelNum])) continue;
+
+        $lvl = LEVELS[$levelNum];
+        foreach ($grouped[$levelNum] as $file) {
+            $shortPath = preg_replace('#^(.*/)?src/#', 'src/', $file['path']);
+            echo $levelColor($levelNum, "{$lvl['emoji']} {$lvl['name']}") . " - {$shortPath}\n";
+
+            foreach ($file['issues'] as $issue) {
+                if ($issue['level'] >= 2) {
+                    $thresholds = getThresholdsString($issue['metric']);
+                    $lineInfo = $issue['line'] > 0 ? " L{$issue['line']}" : "";
+                    echo "  {$issue['metric']}: {$issue['value']}({$thresholds}){$lineInfo}\n";
+                    $slug = METRIC_DOCS[$issue['metric']] ?? null;
+                    if ($slug) {
+                        echo $color('dim', "  See: " . DOCS_BASE_URL . $slug) . "\n";
+                    }
+                }
+            }
+            echo "\n";
+        }
+    }
+
+    // Summary
+    $total = $data['totalFiles'];
+    echo $color('bold', "Files: {$total}") . " | ";
+    echo $levelColor(1, "🍝 {$counts[1]}") . " | ";
+    echo $levelColor(2, "🍝🍝 {$counts[2]}") . " | ";
+    echo $levelColor(3, "🍝🍝🍝 {$counts[3]}") . " | ";
+    echo $levelColor(4, "🍝🍝🍝🍝 {$counts[4]}") . "\n\n";
 }
 
 function printHtml(array $data): void
@@ -421,7 +498,7 @@ JS;
 // Main
 $targetDir = 'src/Resource,src/Service,src/Helper,src/Domain';
 $excludePatterns = ['*Module.php'];
-$format = 'md';
+$format = 'text';
 
 foreach ($argv as $i => $arg) {
     if ($i === 0) continue;
@@ -454,9 +531,11 @@ $cmd = sprintf('php -d error_reporting=E_ERROR %s %s text codesize,design 2>/dev
 $output = shell_exec($cmd) ?? '';
 
 if (empty(trim($output))) {
-    echo $format === 'html'
-        ? "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>🍝 Spaghetti Code Detection</h1><p>All clean! No issues detected.</p></body></html>\n"
-        : "## 🍝 Spaghetti Code Detection\n\n✨ All clean! No issues detected.\n";
+    echo match($format) {
+        'html' => "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>🍝 Spaghetti Code Detection</h1><p>All clean! No issues detected.</p></body></html>\n",
+        'md' => "## 🍝 Spaghetti Code Detection\n\n✨ All clean! No issues detected.\n",
+        default => "\n✨ All clean! No issues detected.\n",
+    };
     exit(0);
 }
 
@@ -466,4 +545,8 @@ if (!empty($excludePatterns)) {
 }
 
 $data = getReportData($files);
-$format === 'html' ? printHtml($data) : printMarkdown($data);
+match($format) {
+    'html' => printHtml($data),
+    'md' => printMarkdown($data),
+    default => printText($data),
+};
