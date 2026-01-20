@@ -120,7 +120,7 @@ final class Pasta
     private function getLevel(string $metric, int $value): int
     {
         if (! isset(self::THRESHOLDS[$metric])) {
-            return 2; // @codeCoverageIgnore
+            return 2;
         }
 
         $thresholds = self::THRESHOLDS[$metric];
@@ -133,10 +133,10 @@ final class Pasta
         }
 
         if ($value <= $thresholds[2]) {
-            return 3; // @codeCoverageIgnore
+            return 3;
         }
 
-        return 4; // @codeCoverageIgnore
+        return 4;
     }
 
     /** @param list<string> $patterns */
@@ -144,7 +144,7 @@ final class Pasta
     {
         foreach ($patterns as $pattern) {
             if (fnmatch($pattern, basename($path))) {
-                return true; // @codeCoverageIgnore
+                return true;
             }
         }
 
@@ -267,7 +267,7 @@ final class Pasta
         $realPath = realpath($phpFile);
         foreach ($filesWithIssues as $issueFile) {
             if ($realPath === $issueFile || str_ends_with($issueFile, basename($phpFile))) {
-                return true; // @codeCoverageIgnore
+                return true;
             }
         }
 
