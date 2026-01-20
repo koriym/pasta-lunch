@@ -33,7 +33,7 @@ use function uasort;
  */
 final class Pasta
 {
-    private const THRESHOLDS = [
+    public const THRESHOLDS = [
         'CouplingBetweenObjects' => [10, 15, 20],
         'CyclomaticComplexity' => [10, 15, 20],
         'NPathComplexity' => [100, 200, 500],

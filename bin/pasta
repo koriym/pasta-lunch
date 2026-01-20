@@ -27,7 +27,7 @@ foreach ($autoloadPaths as $autoload) {
     }
 }
 
-$targetDir = 'src/Resource,src/Service,src/Helper,src/Domain';
+$targetDir = 'src';
 $excludePatterns = ['*Module.php'];
 $format = 'text';
 
@@ -54,11 +54,6 @@ $docsBaseUrl = "https://koriym.github.io/pasta-lunch/issues/{$docsLocale}/";
 $pasta = new Pasta($docsBaseUrl);
 $targetDirs = array_map('trim', explode(',', $targetDir));
 $report = $pasta->analyze($targetDirs, $excludePatterns);
-
-if ($report === null) {
-    fwrite(STDERR, "Error: phpmd not found\n");
-    exit(1);
-}
 
 if ($report->totalFiles === 0 || ($report->counts[4] === 0 && $report->counts[3] === 0 && $report->counts[2] === 0)) {
     echo match ($format) {

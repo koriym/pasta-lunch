@@ -39,28 +39,6 @@ final class Report
         1 => 'Clean code',
     ];
 
-    private const METRIC_THRESHOLDS = [
-        'CouplingBetweenObjects' => 10,
-        'CyclomaticComplexity' => 10,
-        'NPathComplexity' => 100,
-        'ExcessiveClassComplexity' => 50,
-        'ExcessiveMethodLength' => 50,
-        'ExcessiveParameterList' => 5,
-        'TooManyFields' => 10,
-        'TooManyPublicMethods' => 10,
-    ];
-
-    private const THRESHOLDS = [
-        'CouplingBetweenObjects' => [10, 15, 20],
-        'CyclomaticComplexity' => [10, 15, 20],
-        'NPathComplexity' => [100, 200, 500],
-        'ExcessiveClassComplexity' => [50, 80, 120],
-        'ExcessiveMethodLength' => [50, 100, 150],
-        'ExcessiveParameterList' => [5, 10, 15],
-        'TooManyFields' => [10, 15, 20],
-        'TooManyPublicMethods' => [10, 15, 20],
-    ];
-
     private const METRIC_DOCS = [
         'CouplingBetweenObjects' => 'coupling-between-objects',
         'CyclomaticComplexity' => 'cyclomatic-complexity',
@@ -174,7 +152,7 @@ final class Report
                 $output .= "### {$shortPath} {$lvl['emoji']} {$lvl['name']}\n\n**Issues:**\n";
                 foreach ($file['issues'] as $issue) {
                     if ($issue['level'] >= 2) {
-                        $threshold = self::METRIC_THRESHOLDS[$issue['metric']] ?? '?';
+                        $threshold = Pasta::THRESHOLDS[$issue['metric']][0] ?? '?';
                         $lineInfo = $issue['line'] > 0 ? ":L{$issue['line']}" : '';
                         $metricLink = $this->getMetricLink($issue['metric'], 'md');
                         $output .= "- {$metricLink}: {$issue['value']}({$threshold}){$lineInfo}\n";
@@ -382,7 +360,7 @@ JS;
                     continue;
                 }
 
-                $threshold = self::METRIC_THRESHOLDS[$issue['metric']] ?? '?';
+                $threshold = Pasta::THRESHOLDS[$issue['metric']][0] ?? '?';
                 $lineInfo = $issue['line'] > 0 ? "<span class=\"metric-line\">:L{$issue['line']}</span>" : '';
                 $metricLink = $this->getMetricLink($issue['metric'], 'html');
                 $output .= "<li class=\"issue-item\"><span class=\"metric-name\">{$metricLink}</span>: ";
@@ -404,7 +382,7 @@ JS;
         $output = "<div id=\"view-issues\" class=\"view-section\">\n";
         foreach ($issuesByType as $metric => $files) {
             $metricLink = $this->getMetricLink($metric, 'html');
-            $threshold = self::METRIC_THRESHOLDS[$metric] ?? '?';
+            $threshold = Pasta::THRESHOLDS[$metric][0] ?? '?';
             $fileCount = count($files);
             usort($files, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
 
@@ -431,11 +409,11 @@ JS;
 
     private function getThresholdsString(string $metric): string
     {
-        if (! isset(self::THRESHOLDS[$metric])) {
+        if (! isset(Pasta::THRESHOLDS[$metric])) {
             return '?';
         }
 
-        $t = self::THRESHOLDS[$metric];
+        $t = Pasta::THRESHOLDS[$metric];
 
         return "{$t[0]}:{$t[1]}:{$t[2]}";
     }
