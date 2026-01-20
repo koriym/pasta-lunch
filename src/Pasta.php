@@ -13,7 +13,6 @@ use function basename;
 use function count;
 use function escapeshellarg;
 use function explode;
-use function file_exists;
 use function fnmatch;
 use function implode;
 use function is_dir;
@@ -45,10 +44,7 @@ final class Pasta
         'TooManyPublicMethods' => [10, 15, 20],
     ];
 
-    private const PHPMD_PATHS = [
-        './vendor/bin/phpmd',
-        './vendor-bin/tools/vendor/bin/phpmd',
-    ];
+    private const PHPMD_PATH = './vendor/bin/phpmd';
 
     public function __construct(
         private readonly string $docsBaseUrl,
@@ -59,15 +55,10 @@ final class Pasta
      * @param list<string> $targetDirs
      * @param list<string> $excludePatterns
      */
-    public function analyze(array $targetDirs, array $excludePatterns = ['*Module.php']): Report|null
+    public function analyze(array $targetDirs, array $excludePatterns = ['*Module.php']): Report
     {
-        $phpmd = $this->findPhpmd();
-        if ($phpmd === null) {
-            return null; // @codeCoverageIgnore
-        }
-
         $targetDir = implode(',', $targetDirs);
-        $cmd = sprintf('php -d error_reporting=E_ERROR %s %s text codesize,design 2>/dev/null', escapeshellarg($phpmd), escapeshellarg($targetDir));
+        $cmd = sprintf('php -d error_reporting=E_ERROR %s %s text codesize,design 2>/dev/null', escapeshellarg(self::PHPMD_PATH), escapeshellarg($targetDir));
         $output = shell_exec($cmd);
         if (! is_string($output)) {
             $output = ''; // @codeCoverageIgnore
@@ -81,17 +72,6 @@ final class Pasta
         $data = $this->buildReportData($files, $targetDirs, $excludePatterns);
 
         return new Report($data['totalFiles'], $data['grouped'], $this->docsBaseUrl);
-    }
-
-    private function findPhpmd(): string|null
-    {
-        foreach (self::PHPMD_PATHS as $path) {
-            if (file_exists($path)) {
-                return $path;
-            }
-        }
-
-        return null; // @codeCoverageIgnore
     }
 
     /** @return array<string, FileData> */

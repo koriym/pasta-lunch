@@ -19,7 +19,6 @@ class PastaTest extends TestCase
     {
         $pasta = new Pasta('https://example.com/docs/');
         $report = $pasta->analyze([__DIR__ . '/../src']);
-        $this->assertNotNull($report);
         $text = $report->toText();
         $this->assertStringContainsString('Files:', $text);
     }
@@ -28,7 +27,6 @@ class PastaTest extends TestCase
     {
         $pasta = new Pasta('https://example.com/docs/');
         $report = $pasta->analyze([__DIR__ . '/../src']);
-        $this->assertNotNull($report);
         $md = $report->toMarkdown();
         $this->assertStringContainsString('## 🍝 Spaghetti Code Detection', $md);
         $this->assertStringContainsString('### Summary', $md);
@@ -38,7 +36,6 @@ class PastaTest extends TestCase
     {
         $pasta = new Pasta('https://example.com/docs/');
         $report = $pasta->analyze([__DIR__ . '/../src']);
-        $this->assertNotNull($report);
         $html = $report->toHtml();
         $this->assertStringContainsString('<!DOCTYPE html>', $html);
         $this->assertStringContainsString('Spaghetti Code Detection', $html);
@@ -48,13 +45,13 @@ class PastaTest extends TestCase
     {
         $pasta = new Pasta('https://example.com/docs/');
         $report = $pasta->analyze([__DIR__ . '/../src'], ['Types.php']);
-        $this->assertNotNull($report);
+        $this->assertInstanceOf(Report::class, $report);
     }
 
     public function testAnalyzeWithEmptyExcludePatterns(): void
     {
         $pasta = new Pasta('https://example.com/docs/');
         $report = $pasta->analyze([__DIR__ . '/../src'], []);
-        $this->assertNotNull($report);
+        $this->assertInstanceOf(Report::class, $report);
     }
 }
