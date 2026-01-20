@@ -3,7 +3,7 @@ layout: default
 title: Home
 ---
 
-# PASTA
+# PASTA Lunch
 
 **P**HP **A**lert for **S**paghetti **T**wisted **A**rchitecture
 
