@@ -1,5 +1,5 @@
-title: Pasta Lunch
-description: Spaghetti code detector using PHPMD metrics
+title: PASTA
+description: PHP Alert for Spaghetti Twisted Architecture
 baseurl: "/pasta-lunch"
 url: "https://koriym.github.io"
 theme: minima

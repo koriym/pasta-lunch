@@ -3,7 +3,11 @@ layout: default
 title: Home
 ---
 
-# Pasta Lunch
+# PASTA
+
+**P**HP **A**lert for **S**paghetti **T**wisted **A**rchitecture
+
+> Order your code quality check - from Piccolo to Mamma Mia!
 
 Detect spaghetti code using PHPMD metrics.
 

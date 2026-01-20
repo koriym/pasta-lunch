@@ -1,8 +1,12 @@
-# Pasta Lunch 🍝
+# PASTA 🍝
+
+**P**HP **A**lert for **S**paghetti **T**wisted **A**rchitecture
+
+> Order your code quality check - from Piccolo to Mamma Mia!
 
 Detect spaghetti code using PHPMD metrics.
 
-Pasta Lunch focuses on **tangled, complex code** - the kind that's hard to test, hard to change, and hard to understand. These issues aren't caught by type checkers like PHPStan or Psalm, yet they're often what kills project sustainability over time.
+PASTA focuses on **tangled, complex code** - the kind that's hard to test, hard to change, and hard to understand. These issues aren't caught by type checkers like PHPStan or Psalm, yet they're often what kills project sustainability over time.
 
 Unlike general code quality tools, it specifically targets metrics that indicate code entanglement: cyclomatic complexity, coupling, and structural bloat.
 
@@ -36,14 +40,14 @@ composer pasta
 composer pasta:html > report.html
 
 # Direct execution (default: markdown, --format=html for HTML)
-./vendor/bin/pasta-lunch src/Resource
-./vendor/bin/pasta-lunch --format=html > report.html
+./vendor/bin/pasta src/Resource
+./vendor/bin/pasta --format=html > report.html
 
 # Custom exclude patterns (default: *Module.php)
-./vendor/bin/pasta-lunch src --exclude="*Module.php,*Test.php"
+./vendor/bin/pasta src --exclude="*Module.php,*Test.php"
 
 # No exclusions
-./vendor/bin/pasta-lunch src --no-exclude
+./vendor/bin/pasta src --no-exclude
 ```
 
 ## Composer Scripts
@@ -53,8 +57,8 @@ Add to your project's `composer.json`:
 ```json
 {
     "scripts": {
-        "pasta": "pasta-lunch",
-        "pasta:html": "pasta-lunch --format=html"
+        "pasta": "pasta",
+        "pasta:html": "pasta --format=html"
     }
 }
 ```
@@ -85,9 +89,9 @@ See [Issue Types](https://koriym.github.io/pasta-lunch/) for detailed documentat
 
 ### Why these thresholds?
 
-Pasta Lunch thresholds are designed around **clean code ideals**, not just "acceptable" levels. PHPMD defaults represent the point where "measures should be taken" - meaning code at those thresholds already needs attention.
+PASTA thresholds are designed around **clean code ideals**, not just "acceptable" levels. PHPMD defaults represent the point where "measures should be taken" - meaning code at those thresholds already needs attention.
 
-| Metric | PHPMD Default | Pasta Lunch Piccolo | Rationale |
+| Metric | PHPMD Default | PASTA Piccolo | Rationale |
 |--------|---------------|---------------------|-----------|
 | NPath | 200 | ≤100 | 200 paths exceeds human cognitive capacity |
 | CBO | 13 | ≤10 | Proper DI keeps coupling under 10 |
