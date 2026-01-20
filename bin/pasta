@@ -13,540 +13,71 @@ declare(strict_types=1);
  *          ./bin/pasta src --format=html > report.html
  */
 
-// Thresholds for each level [Piccolo, Medio, Grande] - above Grande = Mamma Mia!
-const THRESHOLDS = [
-    'CouplingBetweenObjects' => [10, 15, 20],   // CBO: ≤10, 11-15, 16-20, 21+
-    'CyclomaticComplexity' => [10, 15, 20],     // CC: ≤10, 11-15, 16-20, 21+
-    'NPathComplexity' => [100, 200, 500],       // NPath: ≤100, 101-200, 201-500, 501+
-    'ExcessiveClassComplexity' => [50, 80, 120],// ECC: ≤50, 51-80, 81-120, 121+
-    'ExcessiveMethodLength' => [50, 100, 150],  // ≤50, 51-100, 101-150, 151+
-    'ExcessiveParameterList' => [5, 10, 15],    // ≤5, 6-10, 11-15, 16+
-    'TooManyFields' => [10, 15, 20],            // ≤10, 11-15, 16-20, 21+
-    'TooManyPublicMethods' => [10, 15, 20],     // ≤10, 11-15, 16-20, 21+
+use Koriym\PastaLunch\Pasta;
+
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
 ];
 
-const LEVELS = [
-    1 => ['emoji' => '🍝', 'name' => 'Piccolo'],
-    2 => ['emoji' => '🍝🍝', 'name' => 'Medio'],
-    3 => ['emoji' => '🍝🍝🍝', 'name' => 'Grande'],
-    4 => ['emoji' => '🍝🍝🍝🍝', 'name' => 'Mamma Mia!'],
-];
-
-const METRIC_THRESHOLDS = [
-    'CouplingBetweenObjects' => 10,
-    'CyclomaticComplexity' => 10,
-    'NPathComplexity' => 100,
-    'ExcessiveClassComplexity' => 50,
-    'ExcessiveMethodLength' => 50,
-    'ExcessiveParameterList' => 5,
-    'TooManyFields' => 10,
-    'TooManyPublicMethods' => 10,
-];
-
-const LEVEL_BADGES = [
-    4 => '⚠️⚠️ Unmaintainable',
-    3 => '⚠️ Refactoring required',
-    2 => 'Acceptable',
-    1 => 'Clean code',
-];
-
-$lang = getenv('LANG') ?: 'en';
-$docsLocale = str_starts_with($lang, 'ja') ? 'ja' : 'en';
-define('DOCS_BASE_URL', "https://koriym.github.io/pasta-lunch/issues/{$docsLocale}/");
-
-const METRIC_DOCS = [
-    'CouplingBetweenObjects' => 'coupling-between-objects',
-    'CyclomaticComplexity' => 'cyclomatic-complexity',
-    'NPathComplexity' => 'npath-complexity',
-    'ExcessiveClassComplexity' => 'excessive-class-complexity',
-    'ExcessiveMethodLength' => 'excessive-method-length',
-    'ExcessiveParameterList' => 'excessive-parameter-list',
-    'TooManyFields' => 'too-many-fields',
-    'TooManyPublicMethods' => 'too-many-public-methods',
-    'DevelopmentCodeFragment' => 'development-code-fragment',
-];
-
-function getMetricLink(string $metric, string $format): string
-{
-    $slug = METRIC_DOCS[$metric] ?? null;
-    if ($slug === null) {
-        return $metric;
+$autoloaderFound = false;
+foreach ($autoloadPaths as $autoload) {
+    if (file_exists($autoload)) {
+        require $autoload;
+        $autoloaderFound = true;
+        break;
     }
-    $url = DOCS_BASE_URL . $slug;
-    if ($format === 'html') {
-        return "<a href=\"{$url}\" target=\"_blank\" rel=\"noopener noreferrer\">{$metric}</a>";
-    }
-    return "[{$metric}]({$url})";
 }
 
-function getLevel(string $metric, int $value): int
-{
-    if (!isset(THRESHOLDS[$metric])) {
-        return 2;
-    }
-    $thresholds = THRESHOLDS[$metric];
-    if ($value <= $thresholds[0]) return 1;
-    if ($value <= $thresholds[1]) return 2;
-    if ($value <= $thresholds[2]) return 3;
-    return 4;
+if (! $autoloaderFound) {
+    fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install' first.\n");
+    exit(1);
 }
 
-function parsePhpmdOutput(string $output): array
-{
-    $files = [];
-    foreach (explode("\n", trim($output)) as $line) {
-        if (empty($line)) continue;
-        if (preg_match('/^(.+?):(\d+)\s+(\w+)\s+(.+)$/', $line, $matches)) {
-            $filePath = $matches[1];
-            $lineNum = (int)$matches[2];
-            $metric = $matches[3];
-            $description = $matches[4];
-            $value = 0;
-            if (preg_match('/(\d+)/', $description, $numMatch)) {
-                $value = (int)$numMatch[1];
-            }
-            $relativePath = preg_replace('#^.*/src/#', 'src/', $filePath);
-            if (!isset($files[$relativePath])) {
-                $files[$relativePath] = ['path' => $relativePath, 'issues' => [], 'maxLevel' => 1];
-            }
-            $level = getLevel($metric, $value);
-            $files[$relativePath]['issues'][] = [
-                'metric' => $metric, 'value' => $value, 'line' => $lineNum, 'level' => $level,
-            ];
-            if ($level > $files[$relativePath]['maxLevel']) {
-                $files[$relativePath]['maxLevel'] = $level;
-            }
-        }
-    }
-    uasort($files, fn($a, $b) => $b['maxLevel'] <=> $a['maxLevel']);
-    return $files;
-}
-
-function matchesExcludePattern(string $path, array $patterns): bool
-{
-    foreach ($patterns as $pattern) {
-        if (fnmatch($pattern, basename($path))) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function getReportData(array $files): array
-{
-    $targetDirs = explode(',', $GLOBALS['targetDir']);
-    $allPhpFiles = [];
-    foreach ($targetDirs as $dir) {
-        $dir = trim($dir);
-        if (is_dir($dir)) {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)
-            );
-            foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'php') {
-                    $allPhpFiles[] = $file->getPathname();
-                }
-            }
-        }
-    }
-
-    $grouped = [4 => [], 3 => [], 2 => [], 1 => []];
-    $filesWithIssues = [];
-    foreach ($files as $file) {
-        $grouped[$file['maxLevel']][] = $file;
-        $filesWithIssues[] = realpath($file['path']) ?: $file['path'];
-    }
-
-    foreach ($allPhpFiles as $phpFile) {
-        $realPath = realpath($phpFile);
-        $found = false;
-        foreach ($filesWithIssues as $issueFile) {
-            if ($realPath === $issueFile || str_ends_with($issueFile, basename($phpFile))) {
-                $found = true;
-                break;
-            }
-        }
-        if (!$found && !matchesExcludePattern($phpFile, $GLOBALS['excludePatterns'])) {
-            $grouped[1][] = ['path' => $phpFile, 'maxLevel' => 1, 'issues' => []];
-        }
-    }
-
-    $counts = [4 => count($grouped[4]), 3 => count($grouped[3]), 2 => count($grouped[2]), 1 => count($grouped[1])];
-
-    return [
-        'totalFiles' => count($allPhpFiles),
-        'grouped' => $grouped,
-        'counts' => $counts,
-    ];
-}
-
-function printMarkdown(array $data): void
-{
-    $grouped = $data['grouped'];
-    $counts = $data['counts'];
-
-    echo "## 🍝 Spaghetti Code Detection ({$data['totalFiles']} files)\n\n";
-
-    foreach ([4, 3, 2, 1] as $levelNum) {
-        $lvl = LEVELS[$levelNum];
-        $count = count($grouped[$levelNum]);
-        if ($count === 0) continue;
-
-        echo "### {$lvl['emoji']} {$lvl['name']} ({$count})\n\n";
-        if ($levelNum === 1) {
-            echo "(Remaining files)\n\n";
-            continue;
-        }
-        $fileNames = array_map(fn($f) => preg_replace('#^.*/src/(Resource/)?#', '', $f['path']), $grouped[$levelNum]);
-        echo implode(', ', $fileNames) . "\n\n";
-    }
-
-    $detailFiles = array_merge($grouped[4], $grouped[3], $grouped[2]);
-    if (!empty($detailFiles)) {
-        echo "---\n\n## Details\n\n";
-        foreach ($detailFiles as $file) {
-            $shortPath = preg_replace('#^src/(Resource/)?#', '', $file['path']);
-            $lvl = LEVELS[$file['maxLevel']];
-            echo "### {$shortPath} {$lvl['emoji']} {$lvl['name']}\n\n**Issues:**\n";
-            foreach ($file['issues'] as $issue) {
-                if ($issue['level'] >= 2) {
-                    $threshold = METRIC_THRESHOLDS[$issue['metric']] ?? '?';
-                    $lineInfo = $issue['line'] > 0 ? ":L{$issue['line']}" : "";
-                    $metricLink = getMetricLink($issue['metric'], 'md');
-                    echo "- {$metricLink}: {$issue['value']}({$threshold}){$lineInfo}\n";
-                }
-            }
-            echo "\n";
-        }
-    }
-
-    echo "---\n\n### Summary\n\n";
-    echo "| Level | | Files |\n|-------|---|-------|\n";
-    echo "| 🍝🍝🍝🍝 Mamma Mia! | ⚠️⚠️ Unmaintainable | {$counts[4]} |\n";
-    echo "| 🍝🍝🍝 Grande | ⚠️ Refactoring required | {$counts[3]} |\n";
-    echo "| 🍝🍝 Medio | Acceptable | {$counts[2]} |\n";
-    echo "| 🍝 Piccolo | Clean code | {$counts[1]} |\n";
-}
-
-// ANSI color codes
-const COLORS = [
-    'bold_red' => "\033[1;31m",
-    'red' => "\033[31m",
-    'blue' => "\033[34m",
-    'green' => "\033[32m",
-    'reset' => "\033[0m",
-    'bold' => "\033[1m",
-    'dim' => "\033[2m",
-];
-
-function getThresholdsString(string $metric): string
-{
-    if (!isset(THRESHOLDS[$metric])) {
-        return '?';
-    }
-    $t = THRESHOLDS[$metric];
-    return "{$t[0]}:{$t[1]}:{$t[2]}";
-}
-
-function getLevelColor(int $level): string
-{
-    return match($level) {
-        4 => COLORS['bold_red'],
-        3 => COLORS['red'],
-        2 => COLORS['blue'],
-        default => COLORS['green'],
-    };
-}
-
-function printText(array $data): void
-{
-    $grouped = $data['grouped'];
-    $counts = $data['counts'];
-    $useColor = stream_isatty(STDOUT);
-
-    $color = fn(string $c, string $s) => $useColor ? COLORS[$c] . $s . COLORS['reset'] : $s;
-    $levelColor = fn(int $l, string $s) => $useColor ? getLevelColor($l) . $s . COLORS['reset'] : $s;
-
-    echo "\n";
-
-    // Print issues grouped by level (Mamma Mia! first)
-    foreach ([4, 3, 2] as $levelNum) {
-        if (empty($grouped[$levelNum])) continue;
-
-        $lvl = LEVELS[$levelNum];
-        foreach ($grouped[$levelNum] as $file) {
-            $shortPath = preg_replace('#^(.*/)?src/#', 'src/', $file['path']);
-            echo $levelColor($levelNum, "{$lvl['emoji']} {$lvl['name']}") . " - {$shortPath}\n";
-
-            foreach ($file['issues'] as $issue) {
-                if ($issue['level'] >= 2) {
-                    $thresholds = getThresholdsString($issue['metric']);
-                    $lineInfo = $issue['line'] > 0 ? " L{$issue['line']}" : "";
-                    echo "  {$issue['metric']}: {$issue['value']}({$thresholds}){$lineInfo}\n";
-                    $slug = METRIC_DOCS[$issue['metric']] ?? null;
-                    if ($slug) {
-                        echo $color('dim', "  See: " . DOCS_BASE_URL . $slug) . "\n";
-                    }
-                }
-            }
-            echo "\n";
-        }
-    }
-
-    // Summary
-    $total = $data['totalFiles'];
-    echo $color('bold', "Files: {$total}") . " | ";
-    echo $levelColor(1, "🍝 {$counts[1]}") . " | ";
-    echo $levelColor(2, "🍝🍝 {$counts[2]}") . " | ";
-    echo $levelColor(3, "🍝🍝🍝 {$counts[3]}") . " | ";
-    echo $levelColor(4, "🍝🍝🍝🍝 {$counts[4]}") . "\n\n";
-}
-
-function printHtml(array $data): void
-{
-    $grouped = $data['grouped'];
-    $counts = $data['counts'];
-    $timestamp = date('Y-m-d H:i:s');
-
-    $css = <<<'CSS'
-:root{--color-mamma-mia:#dc3545;--color-grande:#fd7e14;--color-normale:#ffc107;--color-piccolo:#28a745;--color-bg:#fff;--color-bg-secondary:#f6f8fa;--color-border:#d0d7de;--color-text:#1f2328;--color-text-muted:#656d76;--color-link:#0969da}
-*{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:var(--color-text);background:var(--color-bg);margin:0;padding:32px;max-width:1200px;margin:0 auto}
-h1{font-size:2em;border-bottom:1px solid var(--color-border);padding-bottom:.3em}
-h2{font-size:1.5em;border-bottom:1px solid var(--color-border);padding-bottom:.3em;margin-top:24px}
-h3{font-size:1.25em;margin-top:24px}
-.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:500;color:#fff}
-.badge-4{background:var(--color-mamma-mia)}
-.badge-3{background:var(--color-grande)}
-.badge-2{background:var(--color-normale);color:#1f2328}
-.badge-1{background:var(--color-piccolo)}
-.status-4{color:var(--color-mamma-mia);font-weight:500}
-.status-3{color:var(--color-grande);font-weight:500}
-.status-2{color:#996f00;font-weight:500}
-.status-1{color:var(--color-piccolo);font-weight:500}
-.pasta{font-size:1.5em;vertical-align:middle}
-table{border-collapse:collapse;margin:16px 0}
-th,td{padding:8px 16px;text-align:left;border:1px solid var(--color-border)}
-td:last-child{text-align:right;white-space:nowrap}
-th{background:var(--color-bg-secondary);font-weight:600}
-tr:hover{background:var(--color-bg-secondary)}
-.level-section{margin:24px 0;padding:16px;border-left:4px solid;background:var(--color-bg-secondary);border-radius:0 6px 6px 0}
-.level-4{border-left-color:var(--color-mamma-mia)}
-.level-3{border-left-color:var(--color-grande)}
-.level-2{border-left-color:var(--color-normale)}
-.level-1{border-left-color:var(--color-piccolo)}
-.file-list{margin-top:8px;font-family:monospace;font-size:12px;line-height:1.8}
-.file-list a{color:var(--color-link);text-decoration:none}
-.file-list a:hover{text-decoration:underline}
-.issue-list{margin:8px 0;padding-left:20px}
-.issue-item{margin:4px 0;font-family:monospace;font-size:13px}
-.metric-name{font-weight:600}
-.metric-value{color:var(--color-mamma-mia)}
-.metric-threshold{color:var(--color-text-muted)}
-.metric-line{color:var(--color-link)}
-.detail-card{background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;margin:12px 0}
-.detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.detail-path{font-family:monospace;font-weight:600}
-.remaining{color:var(--color-text-muted);font-style:italic}
-.meta{color:var(--color-text-muted);font-size:12px;margin-top:4px}
-.view-toggle{display:flex;gap:8px;margin-bottom:16px}
-.view-btn{padding:6px 16px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);cursor:pointer;font-size:14px;transition:all 0.2s}
-.view-btn:hover{background:var(--color-bg-secondary)}
-.view-btn.active{background:var(--color-link);color:#fff;border-color:var(--color-link)}
-.view-section{display:none}
-.view-section.active{display:block}
-.issue-type-card{background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;margin:12px 0}
-.issue-type-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-border)}
-.issue-type-name{font-weight:600;font-size:1.1em}
-.issue-type-name a{color:var(--color-link);text-decoration:none}
-.issue-type-name a:hover{text-decoration:underline}
-.issue-count{background:var(--color-bg-secondary);padding:2px 8px;border-radius:10px;font-size:12px}
-.file-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--color-bg-secondary);font-family:monospace;font-size:13px}
-.file-item:last-child{border-bottom:none}
-.file-item-path{color:var(--color-text)}
-.file-item-value{color:var(--color-mamma-mia);font-weight:500}
-CSS;
-
-    $js = <<<'JS'
-function switchView(view) {
-    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.querySelector('[data-view="' + view + '"]').classList.add('active');
-    document.getElementById('view-' + view).classList.add('active');
-}
-JS;
-
-    echo "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
-    echo "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n";
-    echo "<title>🍝 Spaghetti Code Detection</title>\n<style>{$css}</style>\n</head>\n<body>\n";
-    echo "<h1>🍝 Spaghetti Code Detection</h1>\n";
-    echo "<p>{$data['totalFiles']} files analyzed</p>\n";
-    echo "<p class=\"meta\">Generated: {$timestamp}</p>\n";
-
-    $total = $data['totalFiles'];
-    echo "<table><thead><tr><th>Level</th><th>Status</th><th>Files</th></tr></thead><tbody>\n";
-    foreach ([4, 3, 2, 1] as $n) {
-        $l = LEVELS[$n];
-        $pct = $total > 0 ? number_format($counts[$n] / $total * 100, 1) : '0.0';
-        echo "<tr><td><span class=\"pasta\">{$l['emoji']}</span> {$l['name']}</td><td><span class=\"status-{$n}\">" . LEVEL_BADGES[$n] . "</span></td><td>{$counts[$n]} ({$pct}%)</td></tr>\n";
-    }
-    echo "</tbody></table>\n<h2>Files by Level</h2>\n";
-
-    foreach ([4, 3, 2, 1] as $levelNum) {
-        $lvl = LEVELS[$levelNum];
-        $count = count($grouped[$levelNum]);
-        if ($count === 0) continue;
-
-        echo "<div class=\"level-section level-{$levelNum}\"><h3><span class=\"pasta\">{$lvl['emoji']}</span> {$lvl['name']} ({$count})</h3>\n";
-        if ($levelNum === 1) {
-            echo "<p class=\"remaining\">(Remaining files)</p></div>\n";
-            continue;
-        }
-        $fileLinks = array_map(function($f) {
-            $shortPath = preg_replace('#^(.*/)?src/(Resource/)?#', '', $f['path']);
-            $id = preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
-            return "<a href=\"#file-{$id}\">" . htmlspecialchars($shortPath) . "</a>";
-        }, $grouped[$levelNum]);
-        echo "<div class=\"file-list\">" . implode(', ', $fileLinks) . "</div></div>\n";
-    }
-
-    $detailFiles = array_merge($grouped[4], $grouped[3], $grouped[2]);
-    if (!empty($detailFiles)) {
-        // Collect issues by type
-        $issuesByType = [];
-        foreach ($detailFiles as $file) {
-            $shortPath = preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
-            foreach ($file['issues'] as $issue) {
-                if ($issue['level'] >= 2) {
-                    $metric = $issue['metric'];
-                    if (!isset($issuesByType[$metric])) {
-                        $issuesByType[$metric] = [];
-                    }
-                    $issuesByType[$metric][] = [
-                        'path' => $shortPath,
-                        'value' => $issue['value'],
-                        'line' => $issue['line'],
-                        'level' => $issue['level'],
-                    ];
-                }
-            }
-        }
-        // Sort by count descending
-        uasort($issuesByType, fn($a, $b) => count($b) <=> count($a));
-
-        echo "<h2>Details</h2>\n";
-        echo "<div class=\"view-toggle\">\n";
-        echo "<button class=\"view-btn active\" data-view=\"files\" onclick=\"switchView('files')\">by Files</button>\n";
-        echo "<button class=\"view-btn\" data-view=\"issues\" onclick=\"switchView('issues')\">by Issues</button>\n";
-        echo "</div>\n";
-
-        // View by Files
-        echo "<div id=\"view-files\" class=\"view-section active\">\n";
-        foreach ($detailFiles as $file) {
-            $shortPath = preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
-            $id = preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
-            $lvl = LEVELS[$file['maxLevel']];
-            $levelNum = $file['maxLevel'];
-            echo "<div class=\"detail-card\" id=\"file-{$id}\"><div class=\"detail-header\">";
-            echo "<span class=\"detail-path\">" . htmlspecialchars($shortPath) . "</span>";
-            echo "<span class=\"badge badge-{$levelNum}\">{$lvl['emoji']} {$lvl['name']}</span></div>\n";
-            echo "<ul class=\"issue-list\">\n";
-            foreach ($file['issues'] as $issue) {
-                if ($issue['level'] >= 2) {
-                    $threshold = METRIC_THRESHOLDS[$issue['metric']] ?? '?';
-                    $lineInfo = $issue['line'] > 0 ? "<span class=\"metric-line\">:L{$issue['line']}</span>" : "";
-                    $metricLink = getMetricLink($issue['metric'], 'html');
-                    echo "<li class=\"issue-item\"><span class=\"metric-name\">{$metricLink}</span>: ";
-                    echo "<span class=\"metric-value\">{$issue['value']}</span>";
-                    echo "<span class=\"metric-threshold\">({$threshold})</span>{$lineInfo}</li>\n";
-                }
-            }
-            echo "</ul></div>\n";
-        }
-        echo "</div>\n";
-
-        // View by Issues
-        echo "<div id=\"view-issues\" class=\"view-section\">\n";
-        foreach ($issuesByType as $metric => $files) {
-            $metricLink = getMetricLink($metric, 'html');
-            $threshold = METRIC_THRESHOLDS[$metric] ?? '?';
-            $fileCount = count($files);
-            // Sort files by value descending
-            usort($files, fn($a, $b) => $b['value'] <=> $a['value']);
-
-            echo "<div class=\"issue-type-card\">\n";
-            echo "<div class=\"issue-type-header\">\n";
-            echo "<span class=\"issue-type-name\">{$metricLink} <span class=\"metric-threshold\">(threshold: {$threshold})</span></span>\n";
-            echo "<span class=\"issue-count\">{$fileCount} files</span>\n";
-            echo "</div>\n";
-            foreach ($files as $f) {
-                $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : "";
-                echo "<div class=\"file-item\">\n";
-                echo "<span class=\"file-item-path\">" . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
-                echo "<span class=\"file-item-value\">{$f['value']}</span>\n";
-                echo "</div>\n";
-            }
-            echo "</div>\n";
-        }
-        echo "</div>\n";
-    }
-
-    echo "<script>{$js}</script>\n";
-    echo "</body></html>\n";
-}
-
-// Main
-$targetDir = 'src/Resource,src/Service,src/Helper,src/Domain';
+$targetDir = 'src';
 $excludePatterns = ['*Module.php'];
 $format = 'text';
 
 foreach ($argv as $i => $arg) {
-    if ($i === 0) continue;
+    if ($i === 0) {
+        continue;
+    }
+
     if (str_starts_with($arg, '--exclude=')) {
         $excludePatterns = array_map('trim', explode(',', substr($arg, 10)));
     } elseif ($arg === '--no-exclude') {
         $excludePatterns = [];
     } elseif (str_starts_with($arg, '--format=')) {
         $format = substr($arg, 9);
-    } elseif (!str_starts_with($arg, '--')) {
+    } elseif (! str_starts_with($arg, '--')) {
         $targetDir = $arg;
     }
 }
 
-$phpmdPaths = ['./vendor/bin/phpmd', './vendor-bin/tools/vendor/bin/phpmd'];
-$phpmd = null;
-foreach ($phpmdPaths as $path) {
-    if (file_exists($path)) {
-        $phpmd = $path;
-        break;
-    }
-}
-
-if (!$phpmd) {
-    fwrite(STDERR, "Error: phpmd not found\n");
+if (! in_array($format, ['text', 'md', 'html'], true)) {
+    fwrite(STDERR, "Error: Invalid --format. Use text|md|html.\n");
     exit(1);
 }
 
-$cmd = sprintf('php -d error_reporting=E_ERROR %s %s text codesize,design 2>/dev/null', escapeshellarg($phpmd), escapeshellarg($targetDir));
-$output = shell_exec($cmd) ?? '';
+$lang = getenv('LANG') ?: 'en';
+$docsLocale = str_starts_with($lang, 'ja') ? 'ja' : 'en';
+$docsBaseUrl = "https://koriym.github.io/pasta-lunch/issues/{$docsLocale}/";
 
-if (empty(trim($output))) {
-    echo match($format) {
-        'html' => "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>🍝 Spaghetti Code Detection</h1><p>All clean! No issues detected.</p></body></html>\n",
-        'md' => "## 🍝 Spaghetti Code Detection\n\n✨ All clean! No issues detected.\n",
-        default => "\n✨ All clean! No issues detected.\n",
+$pasta = new Pasta($docsBaseUrl);
+$targetDirs = array_map('trim', explode(',', $targetDir));
+$report = $pasta->analyze($targetDirs, $excludePatterns);
+
+if ($report->totalFiles === 0 || ($report->counts[4] === 0 && $report->counts[3] === 0 && $report->counts[2] === 0)) {
+    echo match ($format) {
+        'html' => "<!DOCTYPE html><html><head><title>Clean</title></head><body><h1>\u{1F35D} Spaghetti Code Detection</h1><p>All clean! No issues detected.</p></body></html>\n",
+        'md' => "## \u{1F35D} Spaghetti Code Detection\n\n\u{2728} All clean! No issues detected.\n",
+        default => "\n\u{2728} All clean! No issues detected.\n",
     };
     exit(0);
 }
 
-$files = parsePhpmdOutput($output);
-if (!empty($excludePatterns)) {
-    $files = array_filter($files, fn($file) => !matchesExcludePattern($file['path'], $excludePatterns));
-}
-
-$data = getReportData($files);
-match($format) {
-    'html' => printHtml($data),
-    'md' => printMarkdown($data),
-    default => printText($data),
+echo match ($format) {
+    'html' => $report->toHtml(),
+    'md' => $report->toMarkdown(),
+    default => $report->toText(),
 };
