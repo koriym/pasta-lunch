@@ -54,6 +54,11 @@ foreach ($argv as $i => $arg) {
     }
 }
 
+if (! in_array($format, ['text', 'md', 'html'], true)) {
+    fwrite(STDERR, "Error: Invalid --format. Use text|md|html.\n");
+    exit(1);
+}
+
 $lang = getenv('LANG') ?: 'en';
 $docsLocale = str_starts_with($lang, 'ja') ? 'ja' : 'en';
 $docsBaseUrl = "https://koriym.github.io/pasta-lunch/issues/{$docsLocale}/";
