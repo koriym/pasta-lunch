@@ -21,6 +21,9 @@ namespace Koriym\PastaLunch;
  * @psalm-type FileCounts = array{4: int, 3: int, 2: int, 1: int}
  * @psalm-type IssueByTypeItem = array{path: string, value: int, line: int, level: int}
  * @psalm-type IssuesByType = array<string, list<IssueByTypeItem>>
+ * @psalm-type TargetDirs = list<string>
+ * @psalm-type ExcludePatterns = list<string>
+ * @psalm-type PhpFilePaths = list<string>
  */
 final class Types
 {

@@ -30,6 +30,9 @@ use function uasort;
  * @psalm-import-type FileData from Types
  * @psalm-import-type GroupedFiles from Types
  * @psalm-import-type ReportData from Types
+ * @psalm-import-type TargetDirs from Types
+ * @psalm-import-type ExcludePatterns from Types
+ * @psalm-import-type PhpFilePaths from Types
  */
 final class Pasta
 {
@@ -52,8 +55,8 @@ final class Pasta
     }
 
     /**
-     * @param list<string> $targetDirs
-     * @param list<string> $excludePatterns
+     * @param TargetDirs      $targetDirs
+     * @param ExcludePatterns $excludePatterns
      */
     public function analyze(array $targetDirs, array $excludePatterns = ['*Module.php']): Report
     {
@@ -139,7 +142,7 @@ final class Pasta
         return 4;
     }
 
-    /** @param list<string> $patterns */
+    /** @param ExcludePatterns $patterns */
     private function matchesExcludePattern(string $path, array $patterns): bool
     {
         foreach ($patterns as $pattern) {
@@ -153,8 +156,8 @@ final class Pasta
 
     /**
      * @param array<string, FileData> $files
-     * @param list<string>            $targetDirs
-     * @param list<string>            $excludePatterns
+     * @param TargetDirs              $targetDirs
+     * @param ExcludePatterns         $excludePatterns
      *
      * @return ReportData
      */
@@ -175,13 +178,13 @@ final class Pasta
     }
 
     /**
-     * @param list<string> $targetDirs
+     * @param TargetDirs $targetDirs
      *
-     * @return list<string>
+     * @return PhpFilePaths
      */
     private function collectAllPhpFiles(array $targetDirs): array
     {
-        /** @var list<string> $allPhpFiles */
+        /** @var PhpFilePaths $allPhpFiles */
         $allPhpFiles = [];
         foreach ($targetDirs as $dir) {
             $dir = trim($dir);
@@ -226,11 +229,11 @@ final class Pasta
     /**
      * @param array<string, FileData> $files
      *
-     * @return list<string>
+     * @return PhpFilePaths
      */
     private function getFilesWithIssues(array $files): array
     {
-        /** @var list<string> $filesWithIssues */
+        /** @var PhpFilePaths $filesWithIssues */
         $filesWithIssues = [];
         foreach ($files as $file) {
             $realPath = realpath($file['path']);
@@ -241,10 +244,10 @@ final class Pasta
     }
 
     /**
-     * @param GroupedFiles $grouped
-     * @param list<string> $allPhpFiles
-     * @param list<string> $filesWithIssues
-     * @param list<string> $excludePatterns
+     * @param GroupedFiles    $grouped
+     * @param PhpFilePaths    $allPhpFiles
+     * @param PhpFilePaths    $filesWithIssues
+     * @param ExcludePatterns $excludePatterns
      */
     private function addCleanFiles(array &$grouped, array $allPhpFiles, array $filesWithIssues, array $excludePatterns): void
     {
@@ -261,7 +264,7 @@ final class Pasta
         }
     }
 
-    /** @param list<string> $filesWithIssues */
+    /** @param PhpFilePaths $filesWithIssues */
     private function isFileAlreadyIncluded(string $phpFile, array $filesWithIssues): bool
     {
         $realPath = realpath($phpFile);
