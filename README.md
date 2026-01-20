@@ -13,7 +13,6 @@ Unlike general code quality tools, it specifically targets metrics that indicate
 ## Requirements
 
 - PHP 8.1+
-- PHPMD (`composer require --dev phpmd/phpmd`)
 
 ## Installation
 
