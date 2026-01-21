@@ -160,7 +160,7 @@ body {
 .level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
 .level-badge.level-2 { background: var(--caution-light); color: var(--caution); }
 
-.level-badge-mini { font-size: 12px; padding: 2px 4px; border-radius: 3px; }
+.level-badge-mini { font-size: 12px; padding: 2px 4px; border-radius: 3px; min-width: 70px; text-align: center; }
 .level-badge-mini.level-4 { background: var(--critical-light); }
 .level-badge-mini.level-3 { background: var(--warning-light); }
 .level-badge-mini.level-2 { background: var(--caution-light); }
@@ -236,7 +236,7 @@ body {
 .issue-file-row:last-child { border-bottom: none; }
 .issue-file-path { color: var(--text-secondary); }
 .issue-file-right { display: flex; align-items: center; gap: 12px; }
-.issue-file-value { font-weight: 600; color: var(--critical); min-width: 48px; text-align: right; }
+.issue-file-value { font-weight: 600; color: var(--critical); min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; }
 
 .issue-file-copy {
   color: var(--text-muted);
