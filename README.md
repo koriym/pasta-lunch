@@ -55,10 +55,17 @@ Add to your project's `composer.json`:
 ```json
 {
     "scripts": {
-        "pasta": "bin/pasta",
-        "pasta:html": "bin/pasta --format=html"
+        "pasta": "bin/pasta src",
+        "pasta:html": "bin/pasta src --format=html"
     }
 }
+```
+
+Usage:
+
+```bash
+composer pasta
+composer pasta:html > report.html
 ```
 
 ## Spaghetti Levels
