@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🍝 Spaghetti Code Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>:root {
+  --bg: #f8fafc;
+  --bg-white: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --critical: #dc2626;
+  --critical-light: #fef2f2;
+  --warning: #ea580c;
+  --warning-light: #fff7ed;
+  --caution: #ca8a04;
+  --caution-light: #fefce8;
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --accent: #2563eb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  padding: 24px;
+}
+
+.container { max-width: 1200px; margin: 0 auto; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-left h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.header-left .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; letter-spacing: 0.01em; }
+.header-left .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.header-right { text-align: right; }
+.header-right .files-count { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+.header-right .files-label { font-size: 12px; color: var(--text-muted); }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+.stat-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.stat-card.level-4::before { background: var(--critical); }
+.stat-card.level-3::before { background: var(--warning); }
+.stat-card.level-2::before { background: var(--caution); }
+.stat-card.level-1::before { background: var(--success); }
+
+.stat-card .label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.stat-card .pasta { font-size: 14px; }
+.stat-card .value { font-size: 36px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.stat-card.level-4 .value { color: var(--critical); }
+.stat-card.level-3 .value { color: var(--warning); }
+.stat-card.level-2 .value { color: var(--caution); }
+.stat-card.level-1 .value { color: var(--success); }
+.stat-card .detail { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+.main-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+
+.sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+.sidebar-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+.sidebar-card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-card-header .indicator { width: 8px; height: 8px; border-radius: 50%; }
+.sidebar-card-header.level-4 .indicator { background: var(--critical); }
+.sidebar-card-header.level-3 .indicator { background: var(--warning); }
+.sidebar-card-header.level-2 .indicator { background: var(--caution); }
+.sidebar-card-header .count { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+
+.sidebar-file-list { padding: 8px 0; }
+
+.sidebar-file-item {
+  display: block;
+  padding: 8px 16px;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.sidebar-file-item:hover { background: var(--bg); color: var(--text); }
+
+.content { display: flex; flex-direction: column; gap: 16px; }
+
+.content-header { display: flex; align-items: center; justify-content: space-between; }
+.content-title { font-size: 16px; font-weight: 600; }
+
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+
+.view-btn {
+  padding: 6px 14px;
+  border: none;
+  background: var(--bg-white);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.view-btn:not(:last-child) { border-right: 1px solid var(--border); }
+.view-btn:hover { background: var(--bg); }
+.view-btn.active { background: var(--text); color: var(--bg-white); }
+
+.view-section { display: none; }
+.view-section.active { display: block; }
+
+.detail-table { background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.detail-table table { width: 100%; border-collapse: collapse; }
+
+.detail-table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.detail-table tr:last-child td { border-bottom: none; }
+.detail-table tr:hover { background: #fafbfc; }
+
+.level-cell { width: 100px; }
+
+.level-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+.level-badge.level-4 { background: var(--critical-light); color: var(--critical); }
+.level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
+.level-badge.level-2 { background: var(--caution-light); color: var(--caution); }
+
+.file-cell { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+.file-cell .path { color: var(--text); font-weight: 500; }
+
+.issues-cell { font-size: 12px; }
+
+.issue-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.issue-row:not(:last-child) { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
+
+.issue-name { font-family: 'Source Code Pro', monospace; font-size: 11px; }
+.issue-name a { color: var(--text-secondary); text-decoration: none; }
+.issue-name a:hover { color: var(--accent); }
+
+.issue-value {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--critical);
+  background: var(--critical-light);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.issue-threshold { font-size: 10px; color: var(--text-muted); }
+
+.issue-copy {
+  margin-left: auto;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+}
+
+.issue-row:hover .issue-copy { opacity: 1; }
+.issue-copy:hover { color: var(--text); }
+.issue-copy.copied { opacity: 1; color: var(--success); }
+.issue-copy svg { width: 14px; height: 14px; }
+
+.issue-type-section { background: var(--bg-white); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+
+.issue-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.issue-type-name { font-weight: 600; font-size: 13px; }
+.issue-type-name a { color: var(--text); text-decoration: none; }
+.issue-type-name a:hover { color: var(--accent); }
+.issue-type-meta { font-size: 12px; color: var(--text-muted); }
+
+.issue-type-content { padding: 8px 16px; }
+
+.issue-file-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Source Code Pro', monospace;
+  font-size: 12px;
+}
+
+.issue-file-row:last-child { border-bottom: none; }
+.issue-file-path { color: var(--text-secondary); }
+.issue-file-right { display: flex; align-items: center; gap: 12px; }
+.issue-file-value { font-weight: 600; color: var(--critical); min-width: 48px; text-align: right; }
+
+.issue-file-copy {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+}
+
+.issue-file-row:hover .issue-file-copy { opacity: 1; }
+.issue-file-copy:hover { color: var(--text); }
+.issue-file-copy.copied { opacity: 1; color: var(--success); }
+.issue-file-copy svg { width: 14px; height: 14px; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--text);
+  color: var(--bg-white);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Source Code Pro', monospace;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.2s;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 13px;
+}
+
+.footer a { color: var(--text-muted); text-decoration: none; }
+.footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header">
+<div class="header-left">
+<h1>🍝 PASTA</h1>
+<p class="subtitle">PHP Alert for Spaghetti Twisted Architecture</p>
+<p class="meta">Generated: 2026-01-21 00:41:55</p>
+</div>
+<div class="header-right">
+<div class="files-count">653</div>
+<div class="files-label">files analyzed</div>
+</div>
+</header>
+<section class="stats-row">
+<div class="stat-card level-4">
+<div class="label"><span class="pasta">🍝🍝🍝🍝</span> Mamma Mia!</div>
+<div class="value">2</div>
+<div class="detail">0.3% &middot; Unmaintainable</div>
+</div>
+<div class="stat-card level-3">
+<div class="label"><span class="pasta">🍝🍝🍝</span> Grande</div>
+<div class="value">18</div>
+<div class="detail">2.8% &middot; Refactoring required</div>
+</div>
+<div class="stat-card level-2">
+<div class="label"><span class="pasta">🍝🍝</span> Medio</div>
+<div class="value">15</div>
+<div class="detail">2.3% &middot; Acceptable</div>
+</div>
+<div class="stat-card level-1">
+<div class="label"><span class="pasta">🍝</span> Piccolo</div>
+<div class="value">467</div>
+<div class="detail">71.5% &middot; Clean code</div>
+</div>
+</section>
+<div class="main-grid">
+<aside class="sidebar">
+<div class="sidebar-card">
+<div class="sidebar-card-header level-4">
+<span class="indicator"></span>
+Mamma Mia!
+<span class="count">2</span>
+</div>
+<div class="sidebar-file-list">
+<a href="#file-Page-Admin-Api-Cosme-Brand-Import-php" class="sidebar-file-item">Page/Admin/Api/Cosme/Brand/Import.php</a>
+<a href="#file-Page-Content-SpecialContent-php" class="sidebar-file-item">Page/Content/SpecialContent.php</a>
+</div>
+</div>
+<div class="sidebar-card">
+<div class="sidebar-card-header level-3">
+<span class="indicator"></span>
+Grande
+<span class="count">18</span>
+</div>
+<div class="sidebar-file-list">
+<a href="#file-App-Article-php" class="sidebar-file-item">App/Article.php</a>
+<a href="#file-App-Article-Rss-RecentBc-php" class="sidebar-file-item">App/Article/Rss/RecentBc.php</a>
+<a href="#file-App-Cosme-Item-Export-php" class="sidebar-file-item">App/Cosme/Item/Export.php</a>
+<a href="#file-App-Cosme-SearchForm-php" class="sidebar-file-item">App/Cosme/SearchForm.php</a>
+<a href="#file-App-Widget-Article-php" class="sidebar-file-item">App/Widget/Article.php</a>
+<a href="#file-App-Widget-Cosme-php" class="sidebar-file-item">App/Widget/Cosme.php</a>
+<a href="#file-Page-Admin-Api-Article-Collect-php" class="sidebar-file-item">Page/Admin/Api/Article/Collect.php</a>
+<a href="#file-Page-Admin-Api-Cosme-Item-Export-php" class="sidebar-file-item">Page/Admin/Api/Cosme/Item/Export.php</a>
+<a href="#file-Page-Admin-Api-Cosme-Item-Import-php" class="sidebar-file-item">Page/Admin/Api/Cosme/Item/Import.php</a>
+<a href="#file-Page-Cli-Migrate-Contents-RelatedArticlesImage-php" class="sidebar-file-item">Page/Cli/Migrate/Contents/RelatedArticlesImage.php</a>
+<a href="#file-Page-Cli-Migrate-Contents-RemoveOpenNewTab-php" class="sidebar-file-item">Page/Cli/Migrate/Contents/RemoveOpenNewTab.php</a>
+<a href="#file-Page-Content-Article-php" class="sidebar-file-item">Page/Content/Article.php</a>
+<a href="#file-Page-Content-Article-Quizzes-Result-php" class="sidebar-file-item">Page/Content/Article/Quizzes/Result.php</a>
+<a href="#file-Page-Content-Cosme-Search-Index-php" class="sidebar-file-item">Page/Content/Cosme/Search/Index.php</a>
+<a href="#file-Page-Content-Horoscope-DoubutsuUranai-Compatibility-php" class="sidebar-file-item">Page/Content/Horoscope/DoubutsuUranai/Compatibility.php</a>
+<a href="#file-Page-Content-Horoscope-DoubutsuUranai-Today-php" class="sidebar-file-item">Page/Content/Horoscope/DoubutsuUranai/Today.php</a>
+<a href="#file-Page-Content-Horoscope-MoonSign-Diagnosis-php" class="sidebar-file-item">Page/Content/Horoscope/MoonSign/Diagnosis.php</a>
+<a href="#file-Page-Content-Magazine-php" class="sidebar-file-item">Page/Content/Magazine.php</a>
+</div>
+</div>
+<div class="sidebar-card">
+<div class="sidebar-card-header level-2">
+<span class="indicator"></span>
+Medio
+<span class="count">15</span>
+</div>
+<div class="sidebar-file-list">
+<a href="#file-App-Article-Blog-Rss-Recent-php" class="sidebar-file-item">App/Article/Blog/Rss/Recent.php</a>
+<a href="#file-App-Article-Column-Rss-Recent-php" class="sidebar-file-item">App/Article/Column/Rss/Recent.php</a>
+<a href="#file-App-Article-Import-php" class="sidebar-file-item">App/Article/Import.php</a>
+<a href="#file-App-Article-Import-Body-php" class="sidebar-file-item">App/Article/Import/Body.php</a>
+<a href="#file-App-Articles-php" class="sidebar-file-item">App/Articles.php</a>
+<a href="#file-App-Cosme-Item-Copy-php" class="sidebar-file-item">App/Cosme/Item/Copy.php</a>
+<a href="#file-App-Cosme-Item-RelatedArticles-php" class="sidebar-file-item">App/Cosme/Item/RelatedArticles.php</a>
+<a href="#file-App-Search-php" class="sidebar-file-item">App/Search.php</a>
+<a href="#file-App-SpecialContent-php" class="sidebar-file-item">App/SpecialContent.php</a>
+<a href="#file-Page-Admin-Api-Article-All-php" class="sidebar-file-item">Page/Admin/Api/Article/All.php</a>
+<a href="#file-Page-Admin-Api-CatalogTheme-php" class="sidebar-file-item">Page/Admin/Api/CatalogTheme.php</a>
+<a href="#file-Page-Admin-Api-Cosme-Item-ServerTable-php" class="sidebar-file-item">Page/Admin/Api/Cosme/Item/ServerTable.php</a>
+<a href="#file-Page-Cli-Migrate-Contents-RemoveTargetBlank-php" class="sidebar-file-item">Page/Cli/Migrate/Contents/RemoveTargetBlank.php</a>
+<a href="#file-Page-Content-Rss-Column-php" class="sidebar-file-item">Page/Content/Rss/Column.php</a>
+<a href="#file-Page-Content-Widget-Cosme-php" class="sidebar-file-item">Page/Content/Widget/Cosme.php</a>
+</div>
+</div>
+</aside>
+<main class="content">
+<div class="content-header">
+<h2 class="content-title">Details</h2>
+<div class="view-toggle">
+<button class="view-btn active" data-view="files" onclick="switchView('files')">by Files</button>
+<button class="view-btn" data-view="issues" onclick="switchView('issues')">by Issues</button>
+</div>
+</div>
+<div id="view-files" class="view-section active">
+<div class="detail-table">
+<table>
+<thead>
+<tr>
+<th style="width: 100px;">Level</th>
+<th>File</th>
+<th>Issues</th>
+</tr>
+</thead>
+<tbody>
+<tr id="file-Page-Admin-Api-Cosme-Brand-Import-php">
+<td class="level-cell">
+<span class="level-badge level-4">Mamma Mia!</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Cosme/Brand/Import.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Brand/Import.php:40')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">510</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Brand/Import.php:40')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-SpecialContent-php">
+<td class="level-cell">
+<span class="level-badge level-4">Mamma Mia!</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/SpecialContent.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/SpecialContent.php:68')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">576</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/SpecialContent.php:68')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">17</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article.php:46')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-Rss-RecentBc-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article/Rss/RecentBc.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Rss/RecentBc.php:51')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Cosme-Item-Export-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Cosme/Item/Export.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Cosme/Item/Export.php:19')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Cosme-SearchForm-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Cosme/SearchForm.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Cosme/SearchForm.php:26')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Widget-Article-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Widget/Article.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-value">95</span>
+<span class="issue-threshold">(50)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Article.php:36')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Article.php:196')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">324</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Article.php:196')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">16</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Article.php:262')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Article.php:346')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Widget-Cosme-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Widget/Cosme.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Cosme.php:29')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Widget/Cosme.php:43')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-Article-Collect-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Article/Collect.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Article/Collect.php:25')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-Cosme-Item-Export-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Cosme/Item/Export.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Export.php:63')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-Cosme-Item-Import-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Cosme/Item/Import.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">366</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Cli-Migrate-Contents-RelatedArticlesImage-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Cli/Migrate/Contents/RelatedArticlesImage.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RelatedArticlesImage.php:52')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">409</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RelatedArticlesImage.php:52')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Cli-Migrate-Contents-RemoveOpenNewTab-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Cli/Migrate/Contents/RemoveOpenNewTab.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">274</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Article-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Article.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-value">61</span>
+<span class="issue-threshold">(50)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article.php:36')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article.php:64')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">384</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article.php:64')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article.php:182')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Article-Quizzes-Result-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Article/Quizzes/Result.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article/Quizzes/Result.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">320</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Article/Quizzes/Result.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Cosme-Search-Index-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Cosme/Search/Index.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">13</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Cosme/Search/Index.php:41')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Horoscope-DoubutsuUranai-Compatibility-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Horoscope/DoubutsuUranai/Compatibility.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">15</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">324</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Horoscope-DoubutsuUranai-Today-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Horoscope/DoubutsuUranai/Today.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">15</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Today.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">216</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Today.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Horoscope-MoonSign-Diagnosis-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Horoscope/MoonSign/Diagnosis.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">16</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:35')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:67')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-value">324</span>
+<span class="issue-threshold">(100)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:67')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Magazine-php">
+<td class="level-cell">
+<span class="level-badge level-3">Grande</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Magazine.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">16</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Magazine.php:31')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Magazine.php:35')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-Blog-Rss-Recent-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article/Blog/Rss/Recent.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Blog/Rss/Recent.php:49')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-Column-Rss-Recent-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article/Column/Rss/Recent.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Column/Rss/Recent.php:45')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-Import-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article/Import.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">15</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Import.php:32')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/development-code-fragment" target="_blank" rel="noopener noreferrer">DevelopmentCodeFragment</a></span>
+<span class="issue-value">0</span>
+<span class="issue-threshold">(?)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Import.php:263')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/development-code-fragment" target="_blank" rel="noopener noreferrer">DevelopmentCodeFragment</a></span>
+<span class="issue-value">0</span>
+<span class="issue-threshold">(?)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Import.php:285')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Article-Import-Body-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Article/Import/Body.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/development-code-fragment" target="_blank" rel="noopener noreferrer">DevelopmentCodeFragment</a></span>
+<span class="issue-value">0</span>
+<span class="issue-threshold">(?)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Article/Import/Body.php:113')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Articles-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Articles.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Articles.php:57')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Cosme-Item-Copy-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Cosme/Item/Copy.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">14</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Cosme/Item/Copy.php:28')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Cosme-Item-RelatedArticles-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Cosme/Item/RelatedArticles.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Cosme/Item/RelatedArticles.php:98')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-Search-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/Search.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-value">67</span>
+<span class="issue-threshold">(50)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/Search.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-App-SpecialContent-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">App/SpecialContent.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-value">15</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'App/SpecialContent.php:47')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-Article-All-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Article/All.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Article/All.php:19')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-CatalogTheme-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/CatalogTheme.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/CatalogTheme.php:98')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Admin-Api-Cosme-Item-ServerTable-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Admin/Api/Cosme/Item/ServerTable.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/ServerTable.php:28')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Cli-Migrate-Contents-RemoveTargetBlank-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Cli/Migrate/Contents/RemoveTargetBlank.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">12</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveTargetBlank.php:45')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Rss-Column-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Rss/Column.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-value">10</span>
+<span class="issue-threshold">(5)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Rss/Column.php:26')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+<tr id="file-Page-Content-Widget-Cosme-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio</span>
+</td>
+<td class="file-cell">
+<span class="path">Page/Content/Widget/Cosme.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-value">11</span>
+<span class="issue-threshold">(10)</span>
+<span class="issue-copy" onclick="copyPath(this, 'Page/Content/Widget/Cosme.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="view-issues" class="view-section">
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/cyclomatic-complexity" target="_blank" rel="noopener noreferrer">CyclomaticComplexity</a></span>
+<span class="issue-type-meta">threshold: 10 &middot; 17 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Article.php:L262</span>
+<span class="issue-file-right">
+<span class="issue-file-value">16</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Article.php:262')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Brand/Import.php:L40</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Brand/Import.php:40')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/SpecialContent.php:L68</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/SpecialContent.php:68')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Item/Import.php:L50</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Cli/Migrate/Contents/RelatedArticlesImage.php:L52</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RelatedArticlesImage.php:52')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article.php:L182</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article.php:182')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/MoonSign/Diagnosis.php:L67</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:67')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Cli/Migrate/Contents/RemoveTargetBlank.php:L45</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveTargetBlank.php:45')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Article.php:L196</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Article.php:196')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Article.php:L346</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Article.php:346')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:L55</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article.php:L64</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article.php:64')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article/Quizzes/Result.php:L55</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article/Quizzes/Result.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:L50</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Cosme/Item/RelatedArticles.php:L98</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Cosme/Item/RelatedArticles.php:98')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/CatalogTheme.php:L98</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/CatalogTheme.php:98')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Widget/Cosme.php:L33</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Widget/Cosme.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-parameter-list" target="_blank" rel="noopener noreferrer">ExcessiveParameterList</a></span>
+<span class="issue-type-meta">threshold: 5 &middot; 14 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">App/Cosme/Item/Export.php:L19</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Cosme/Item/Export.php:19')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Article/Collect.php:L25</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Article/Collect.php:25')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Item/Export.php:L63</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Export.php:63')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Cosme/Search/Index.php:L41</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Cosme/Search/Index.php:41')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Cosme/SearchForm.php:L26</span>
+<span class="issue-file-right">
+<span class="issue-file-value">12</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Cosme/SearchForm.php:26')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Rss/RecentBc.php:L51</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Rss/RecentBc.php:51')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Cosme.php:L43</span>
+<span class="issue-file-right">
+<span class="issue-file-value">11</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Cosme.php:43')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Magazine.php:L35</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Magazine.php:35')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Blog/Rss/Recent.php:L49</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Blog/Rss/Recent.php:49')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Column/Rss/Recent.php:L45</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Column/Rss/Recent.php:45')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Articles.php:L57</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Articles.php:57')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Article/All.php:L19</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Article/All.php:19')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Item/ServerTable.php:L28</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/ServerTable.php:28')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Rss/Column.php:L26</span>
+<span class="issue-file-right">
+<span class="issue-file-value">10</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Rss/Column.php:26')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/npath-complexity" target="_blank" rel="noopener noreferrer">NPathComplexity</a></span>
+<span class="issue-type-meta">threshold: 100 &middot; 11 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/SpecialContent.php:L68</span>
+<span class="issue-file-right">
+<span class="issue-file-value">576</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/SpecialContent.php:68')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Brand/Import.php:L40</span>
+<span class="issue-file-right">
+<span class="issue-file-value">510</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Brand/Import.php:40')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Cli/Migrate/Contents/RelatedArticlesImage.php:L52</span>
+<span class="issue-file-right">
+<span class="issue-file-value">409</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RelatedArticlesImage.php:52')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article.php:L64</span>
+<span class="issue-file-right">
+<span class="issue-file-value">384</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article.php:64')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Item/Import.php:L50</span>
+<span class="issue-file-right">
+<span class="issue-file-value">366</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Article.php:L196</span>
+<span class="issue-file-right">
+<span class="issue-file-value">324</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Article.php:196')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:L50</span>
+<span class="issue-file-right">
+<span class="issue-file-value">324</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/MoonSign/Diagnosis.php:L67</span>
+<span class="issue-file-right">
+<span class="issue-file-value">324</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:67')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article/Quizzes/Result.php:L55</span>
+<span class="issue-file-right">
+<span class="issue-file-value">320</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article/Quizzes/Result.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:L55</span>
+<span class="issue-file-right">
+<span class="issue-file-value">274</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Cli/Migrate/Contents/RemoveOpenNewTab.php:55')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/DoubutsuUranai/Today.php:L50</span>
+<span class="issue-file-right">
+<span class="issue-file-value">216</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Today.php:50')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/coupling-between-objects" target="_blank" rel="noopener noreferrer">CouplingBetweenObjects</a></span>
+<span class="issue-type-meta">threshold: 10 &middot; 10 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article.php:L46</span>
+<span class="issue-file-right">
+<span class="issue-file-value">17</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article.php:46')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/MoonSign/Diagnosis.php:L35</span>
+<span class="issue-file-right">
+<span class="issue-file-value">16</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/MoonSign/Diagnosis.php:35')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Magazine.php:L31</span>
+<span class="issue-file-right">
+<span class="issue-file-value">16</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Magazine.php:31')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:L33</span>
+<span class="issue-file-right">
+<span class="issue-file-value">15</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Compatibility.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Horoscope/DoubutsuUranai/Today.php:L33</span>
+<span class="issue-file-right">
+<span class="issue-file-value">15</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Horoscope/DoubutsuUranai/Today.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Import.php:L32</span>
+<span class="issue-file-right">
+<span class="issue-file-value">15</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Import.php:32')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/SpecialContent.php:L47</span>
+<span class="issue-file-right">
+<span class="issue-file-value">15</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/SpecialContent.php:47')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Cosme/Item/Copy.php:L28</span>
+<span class="issue-file-right">
+<span class="issue-file-value">14</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Cosme/Item/Copy.php:28')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Cosme.php:L29</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Cosme.php:29')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Admin/Api/Cosme/Item/Import.php:L33</span>
+<span class="issue-file-right">
+<span class="issue-file-value">13</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Admin/Api/Cosme/Item/Import.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-type-meta">threshold: 50 &middot; 3 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">App/Widget/Article.php:L36</span>
+<span class="issue-file-right">
+<span class="issue-file-value">95</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Widget/Article.php:36')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Search.php:L33</span>
+<span class="issue-file-right">
+<span class="issue-file-value">67</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Search.php:33')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">Page/Content/Article.php:L36</span>
+<span class="issue-file-right">
+<span class="issue-file-value">61</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'Page/Content/Article.php:36')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/development-code-fragment" target="_blank" rel="noopener noreferrer">DevelopmentCodeFragment</a></span>
+<span class="issue-type-meta">threshold: ? &middot; 3 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Import.php:L263</span>
+<span class="issue-file-right">
+<span class="issue-file-value">0</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Import.php:263')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Import.php:L285</span>
+<span class="issue-file-right">
+<span class="issue-file-value">0</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Import.php:285')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+<div class="issue-file-row">
+<span class="issue-file-path">App/Article/Import/Body.php:L113</span>
+<span class="issue-file-right">
+<span class="issue-file-value">0</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'App/Article/Import/Body.php:113')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<footer class="footer">
+<a href="https://koriym.github.io/pasta-lunch/" target="_blank" rel="noopener noreferrer">🍝 PASTA Lunch</a>
+</footer>
+<div class="toast" id="toast"></div>
+<script>function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-view="' + view + '"]').classList.add('active');
+    document.getElementById('view-' + view).classList.add('active');
+}
+
+function copyPath(el, path) {
+    navigator.clipboard.writeText(path).then(() => {
+        var originalSvg = el.innerHTML;
+        el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>';
+        el.classList.add('copied');
+
+        var toast = document.getElementById('toast');
+        toast.textContent = path;
+        toast.classList.add('show');
+
+        setTimeout(function() {
+            el.innerHTML = originalSvg;
+            el.classList.remove('copied');
+            toast.classList.remove('show');
+        }, 1500);
+    });
+}
+</script>
+</body></html>

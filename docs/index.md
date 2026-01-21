@@ -34,12 +34,31 @@ Detect spaghetti code using PHPMD metrics.
 
 - [DevelopmentCodeFragment](issues/en/development-code-fragment) - Debug code left in production
 
-## Quick Start
+## Installation
 
 ```bash
 composer require --dev koriym/pasta-lunch
-./vendor/bin/pasta-lunch src/
 ```
+
+## Usage
+
+```bash
+# Text output (default)
+./vendor/bin/pasta src/
+
+# Markdown output
+./vendor/bin/pasta --format=md > report.md
+
+# HTML output
+./vendor/bin/pasta --format=html > report.html
+
+# Custom exclude patterns (default: *Module.php)
+./vendor/bin/pasta src --exclude="*Module.php,*Test.php"
+```
+
+See [Sample Report](demo/report.html) for an example HTML output.
+
+For full documentation, see the [README](https://github.com/koriym/pasta-lunch#readme).
 
 ## References
 

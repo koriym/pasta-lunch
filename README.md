@@ -70,6 +70,10 @@ Add to your project's `composer.json`:
 | 🍝🍝🍝 | Grande | Refactoring required |
 | 🍝🍝🍝🍝 | Mamma Mia! | Unmaintainable |
 
+## Demo
+
+See [Sample Report](https://koriym.github.io/pasta-lunch/demo/report.html) for an example HTML output.
+
 ## Metrics
 
 | Metric | Piccolo | Medio | Grande | Mamma Mia! |

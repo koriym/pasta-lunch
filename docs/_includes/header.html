@@ -15,8 +15,10 @@
         </span>
       </label>
       <div class="trigger" id="site-nav-menu">
+        {% if page.url contains '/issues/' %}
         <a class="page-link" href="{{ page.url | replace: '/ja/', '/en/' | relative_url }}">English</a>
         <a class="page-link" href="{{ page.url | replace: '/en/', '/ja/' | relative_url }}">日本語</a>
+        {% endif %}
       </div>
     </nav>
   </div>
