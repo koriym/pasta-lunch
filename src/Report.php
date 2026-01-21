@@ -18,6 +18,7 @@ use function stream_isatty;
 use function uasort;
 use function usort;
 
+use const ENT_QUOTES;
 use const STDOUT;
 
 /**
@@ -210,7 +211,7 @@ final class Report
 
     private function buildHtmlHead(string $css, string $timestamp): string
     {
-        $output = "<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n";
+        $output = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
         $output .= "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n";
         $output .= "<title>\u{1F35D} Spaghetti Code Detection</title>\n";
         $output .= "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n";
@@ -283,7 +284,7 @@ final class Report
             foreach ($this->grouped[$levelNum] as $file) {
                 $shortPath = (string) preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
                 $id = (string) preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
-                $output .= '<a href="#file-' . $id . '" class="sidebar-file-item">' . htmlspecialchars($shortPath) . "</a>\n";
+                $output .= '<a href="#file-' . $id . '" class="sidebar-file-item">' . htmlspecialchars($shortPath, ENT_QUOTES, 'UTF-8') . "</a>\n";
             }
 
             $output .= "</div>\n";
@@ -345,6 +346,7 @@ final class Report
 
                 $issuesByType[$metric][] = [
                     'path' => $shortPath,
+                    'fullPath' => $file['path'],
                     'value' => $issue['value'],
                     'line' => $issue['line'],
                     'level' => $issue['level'],
@@ -374,7 +376,7 @@ final class Report
             $output .= "<span class=\"level-badge level-{$levelNum}\">{$lvl['name']}<span class=\"level-pasta\">{$lvl['emoji']}</span></span>\n";
             $output .= "</td>\n";
             $output .= "<td class=\"file-cell\">\n";
-            $output .= '<span class="path">' . htmlspecialchars($shortPath) . "</span>\n";
+            $output .= '<span class="path">' . htmlspecialchars($shortPath, ENT_QUOTES, 'UTF-8') . "</span>\n";
             $output .= "</td>\n";
             $output .= "<td class=\"issues-cell\">\n";
 
@@ -385,7 +387,7 @@ final class Report
 
                 $thresholds = $this->getThresholdsString($issue['metric']);
                 $lineInfo = $issue['line'] > 0 ? ":{$issue['line']}" : '';
-                $copyPath = htmlspecialchars($shortPath) . $lineInfo;
+                $copyPath = htmlspecialchars($file['path'], ENT_QUOTES, 'UTF-8') . $lineInfo;
                 $metricLink = $this->getMetricLink($issue['metric'], 'html');
                 $displayValue = (string) $issue['value'];
                 $output .= "<div class=\"issue-row\">\n";
@@ -422,11 +424,11 @@ final class Report
             $output .= "<div class=\"issue-type-content\">\n";
             foreach ($files as $f) {
                 $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : '';
-                $copyPath = htmlspecialchars($f['path']) . ($f['line'] > 0 ? ":{$f['line']}" : '');
+                $copyPath = htmlspecialchars($f['fullPath'], ENT_QUOTES, 'UTF-8') . ($f['line'] > 0 ? ":{$f['line']}" : '');
                 $lvl = self::LEVELS[$f['level']];
                 $displayValue = (string) $f['value'];
                 $output .= "<div class=\"issue-file-row\">\n";
-                $output .= '<span class="issue-file-path">' . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
+                $output .= '<span class="issue-file-path">' . htmlspecialchars($f['path'], ENT_QUOTES, 'UTF-8') . "{$lineInfo}</span>\n";
                 $output .= "<span class=\"issue-file-right\">\n";
                 $output .= "<span class=\"issue-file-value\">{$displayValue}</span>\n";
                 $output .= "<span class=\"level-badge-mini level-{$f['level']}\">{$lvl['emoji']}</span>\n";
