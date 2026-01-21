@@ -52,7 +52,6 @@ final class Report
         'ExcessiveParameterList' => 'excessive-parameter-list',
         'TooManyFields' => 'too-many-fields',
         'TooManyPublicMethods' => 'too-many-public-methods',
-        'DevelopmentCodeFragment' => 'development-code-fragment',
     ];
 
     private const COLORS = [
@@ -388,7 +387,7 @@ final class Report
                 $lineInfo = $issue['line'] > 0 ? ":{$issue['line']}" : '';
                 $copyPath = htmlspecialchars($shortPath) . $lineInfo;
                 $metricLink = $this->getMetricLink($issue['metric'], 'html');
-                $displayValue = $issue['metric'] === 'DevelopmentCodeFragment' ? 'n/a' : (string) $issue['value'];
+                $displayValue = (string) $issue['value'];
                 $output .= "<div class=\"issue-row\">\n";
                 $output .= "<span class=\"issue-name\">{$metricLink}</span>\n";
                 $output .= "<span class=\"issue-value\">{$displayValue}</span>\n";
@@ -425,7 +424,7 @@ final class Report
                 $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : '';
                 $copyPath = htmlspecialchars($f['path']) . ($f['line'] > 0 ? ":{$f['line']}" : '');
                 $lvl = self::LEVELS[$f['level']];
-                $displayValue = $metric === 'DevelopmentCodeFragment' ? 'n/a' : (string) $f['value'];
+                $displayValue = (string) $f['value'];
                 $output .= "<div class=\"issue-file-row\">\n";
                 $output .= '<span class="issue-file-path">' . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
                 $output .= "<span class=\"issue-file-right\">\n";
