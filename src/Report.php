@@ -423,10 +423,12 @@ final class Report
             foreach ($files as $f) {
                 $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : '';
                 $copyPath = htmlspecialchars($f['path']) . ($f['line'] > 0 ? ":{$f['line']}" : '');
+                $lvl = self::LEVELS[$f['level']];
                 $output .= "<div class=\"issue-file-row\">\n";
                 $output .= '<span class="issue-file-path">' . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
                 $output .= "<span class=\"issue-file-right\">\n";
                 $output .= "<span class=\"issue-file-value\">{$f['value']}</span>\n";
+                $output .= "<span class=\"level-badge-mini level-{$f['level']}\">{$lvl['emoji']}</span>\n";
                 $output .= "<span class=\"issue-file-copy\" onclick=\"copyPath(this, '{$copyPath}')\">" . self::COPY_ICON_SVG . "</span>\n";
                 $output .= "</span>\n";
                 $output .= "</div>\n";

@@ -160,6 +160,11 @@ body {
 .level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
 .level-badge.level-2 { background: var(--caution-light); color: var(--caution); }
 
+.level-badge-mini { font-size: 12px; padding: 2px 4px; border-radius: 3px; }
+.level-badge-mini.level-4 { background: var(--critical-light); }
+.level-badge-mini.level-3 { background: var(--warning-light); }
+.level-badge-mini.level-2 { background: var(--caution-light); }
+
 .file-cell { font-family: 'Source Code Pro', monospace; font-size: 12px; }
 .file-cell .path { color: var(--text); font-weight: 500; }
 
