@@ -160,7 +160,7 @@ body {
 .level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
 .level-badge.level-2 { background: var(--caution-light); color: var(--caution); }
 
-.level-badge-mini { font-size: 12px; padding: 2px 4px; border-radius: 3px; min-width: 70px; text-align: center; }
+.level-badge-mini { font-size: 12px; padding: 2px 4px; border-radius: 3px; min-width: 70px; text-align: left; }
 .level-badge-mini.level-4 { background: var(--critical-light); }
 .level-badge-mini.level-3 { background: var(--warning-light); }
 .level-badge-mini.level-2 { background: var(--caution-light); }
