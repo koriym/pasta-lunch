@@ -384,14 +384,14 @@ final class Report
                     continue;
                 }
 
-                $threshold = Pasta::THRESHOLDS[$issue['metric']][0] ?? '?';
+                $thresholds = $this->getThresholdsString($issue['metric']);
                 $lineInfo = $issue['line'] > 0 ? ":{$issue['line']}" : '';
                 $copyPath = htmlspecialchars($shortPath) . $lineInfo;
                 $metricLink = $this->getMetricLink($issue['metric'], 'html');
                 $output .= "<div class=\"issue-row\">\n";
                 $output .= "<span class=\"issue-name\">{$metricLink}</span>\n";
                 $output .= "<span class=\"issue-value\">{$issue['value']}</span>\n";
-                $output .= "<span class=\"issue-threshold\">({$threshold})</span>\n";
+                $output .= "<span class=\"issue-threshold\">({$thresholds})</span>\n";
                 $output .= "<span class=\"issue-copy\" onclick=\"copyPath(this, '{$copyPath}')\">" . self::COPY_ICON_SVG . "</span>\n";
                 $output .= "</div>\n";
             }
@@ -410,14 +410,14 @@ final class Report
         $output = "<div id=\"view-issues\" class=\"view-section\">\n";
         foreach ($issuesByType as $metric => $files) {
             $metricLink = $this->getMetricLink($metric, 'html');
-            $threshold = Pasta::THRESHOLDS[$metric][0] ?? '?';
+            $thresholds = $this->getThresholdsString($metric);
             $fileCount = count($files);
             usort($files, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
 
             $output .= "<div class=\"issue-type-section\">\n";
             $output .= "<div class=\"issue-type-header\">\n";
             $output .= "<span class=\"issue-type-name\">{$metricLink}</span>\n";
-            $output .= "<span class=\"issue-type-meta\">threshold: {$threshold} &middot; {$fileCount} files</span>\n";
+            $output .= "<span class=\"issue-type-meta\">threshold: {$thresholds} &middot; {$fileCount} files</span>\n";
             $output .= "</div>\n";
             $output .= "<div class=\"issue-type-content\">\n";
             foreach ($files as $f) {
