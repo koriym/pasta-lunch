@@ -372,7 +372,7 @@ final class Report
 
             $output .= "<tr id=\"file-{$id}\">\n";
             $output .= "<td class=\"level-cell\">\n";
-            $output .= "<span class=\"level-badge level-{$levelNum}\">{$lvl['name']}</span>\n";
+            $output .= "<span class=\"level-badge level-{$levelNum}\">{$lvl['emoji']} {$lvl['name']}</span>\n";
             $output .= "</td>\n";
             $output .= "<td class=\"file-cell\">\n";
             $output .= '<span class="path">' . htmlspecialchars($shortPath) . "</span>\n";
