@@ -153,7 +153,7 @@ body {
 
 .level-cell { width: 160px; }
 
-.level-badge { display: inline-flex; flex-direction: column; align-items: center; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 6px; }
+.level-badge { display: inline-flex; flex-direction: column; align-items: center; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 6px; min-width: 120px; }
 .level-pasta { font-size: 14px; margin-top: 2px; letter-spacing: -2px; }
 .level-badge.level-4 { background: var(--critical-light); color: var(--critical); }
 .level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
