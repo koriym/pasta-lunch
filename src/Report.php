@@ -18,6 +18,7 @@ use function stream_isatty;
 use function uasort;
 use function usort;
 
+use const ENT_QUOTES;
 use const STDOUT;
 
 /**
@@ -35,11 +36,13 @@ final class Report
     ];
 
     private const LEVEL_BADGES = [
-        4 => "\u{26A0}\u{FE0F}\u{26A0}\u{FE0F} Unmaintainable",
-        3 => "\u{26A0}\u{FE0F} Refactoring required",
+        4 => 'Unmaintainable',
+        3 => 'Refactoring required',
         2 => 'Acceptable',
         1 => 'Clean code',
     ];
+
+    private const COPY_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg>';
 
     private const METRIC_DOCS = [
         'CouplingBetweenObjects' => 'coupling-between-objects',
@@ -50,7 +53,6 @@ final class Report
         'ExcessiveParameterList' => 'excessive-parameter-list',
         'TooManyFields' => 'too-many-fields',
         'TooManyPublicMethods' => 'too-many-public-methods',
-        'DevelopmentCodeFragment' => 'development-code-fragment',
     ];
 
     private const COLORS = [
@@ -182,9 +184,10 @@ final class Report
         $js = $this->getHtmlJs();
 
         $output = $this->buildHtmlHead($css, $timestamp);
-        $output .= $this->buildHtmlSummaryTable();
-        $output .= $this->buildHtmlLevelSections();
-        $output .= $this->buildHtmlDetails();
+        $output .= $this->buildHtmlStatsRow();
+        $output .= $this->buildHtmlMainGrid();
+        $output .= $this->buildHtmlFooter();
+        $output .= "<div class=\"toast\" id=\"toast\"></div>\n";
         $output .= "<script>{$js}</script>\n</body></html>\n";
 
         return $output;
@@ -210,77 +213,114 @@ final class Report
     {
         $output = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
         $output .= "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n";
-        $output .= "<title>\u{1F35D} Spaghetti Code Detection</title>\n<style>{$css}</style>\n</head>\n<body>\n";
-        $output .= "<h1>\u{1F35D} Spaghetti Code Detection</h1>\n";
-        $output .= "<p>{$this->totalFiles} files analyzed</p>\n";
+        $output .= "<title>\u{1F35D} Spaghetti Code Detection</title>\n";
+        $output .= "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n";
+        $output .= "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n";
+        $output .= "<link href=\"https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">\n";
+        $output .= "<style>{$css}</style>\n</head>\n<body>\n";
+        $output .= "<div class=\"container\">\n";
+        $output .= "<header class=\"header\">\n";
+        $output .= "<div class=\"header-left\">\n";
+        $output .= "<h1>\u{1F35D} PASTA</h1>\n";
+        $output .= "<p class=\"subtitle\">PHP Alert for Spaghetti Twisted Architecture</p>\n";
         $output .= "<p class=\"meta\">Generated: {$timestamp}</p>\n";
+        $output .= "</div>\n";
+        $output .= "<div class=\"header-right\">\n";
+        $output .= "<div class=\"files-count\">{$this->totalFiles}</div>\n";
+        $output .= "<div class=\"files-label\">files analyzed</div>\n";
+        $output .= "</div>\n";
+        $output .= "</header>\n";
 
         return $output;
     }
 
-    private function buildHtmlSummaryTable(): string
+    private function buildHtmlStatsRow(): string
     {
-        $output = "<table><thead><tr><th>Level</th><th>Status</th><th>Files</th></tr></thead><tbody>\n";
+        $output = "<section class=\"stats-row\">\n";
         foreach ([4, 3, 2, 1] as $n) {
             $l = self::LEVELS[$n];
             /** @psalm-suppress InvalidOperand */
             $pct = $this->totalFiles > 0 ? number_format($this->counts[$n] / $this->totalFiles * 100, 1) : '0.0';
-            $output .= "<tr><td><span class=\"pasta\">{$l['emoji']}</span> {$l['name']}</td><td><span class=\"status-{$n}\">" . self::LEVEL_BADGES[$n] . "</span></td><td>{$this->counts[$n]} ({$pct}%)</td></tr>\n";
+            $output .= "<div class=\"stat-card level-{$n}\">\n";
+            $output .= "<div class=\"label\"><span class=\"pasta\">{$l['emoji']}</span> {$l['name']}</div>\n";
+            $output .= "<div class=\"value\">{$this->counts[$n]}</div>\n";
+            $output .= "<div class=\"detail\">{$pct}% &middot; " . self::LEVEL_BADGES[$n] . "</div>\n";
+            $output .= "</div>\n";
         }
 
-        $output .= "</tbody></table>\n<h2>Files by Level</h2>\n";
+        $output .= "</section>\n";
 
         return $output;
     }
 
-    private function buildHtmlLevelSections(): string
+    private function buildHtmlMainGrid(): string
     {
-        $output = '';
-        foreach ([4, 3, 2, 1] as $levelNum) {
-            $lvl = self::LEVELS[$levelNum];
+        $output = "<div class=\"main-grid\">\n";
+        $output .= $this->buildHtmlSidebar();
+        $output .= $this->buildHtmlContent();
+        $output .= "</div>\n";
+        $output .= "</div>\n"; // close container
+
+        return $output;
+    }
+
+    private function buildHtmlSidebar(): string
+    {
+        $output = "<aside class=\"sidebar\">\n";
+        foreach ([4, 3, 2] as $levelNum) {
             $count = count($this->grouped[$levelNum]);
             if ($count === 0) {
                 continue;
             }
 
-            $output .= "<div class=\"level-section level-{$levelNum}\"><h3><span class=\"pasta\">{$lvl['emoji']}</span> {$lvl['name']} ({$count})</h3>\n";
-            if ($levelNum === 1) {
-                $output .= "<p class=\"remaining\">(Remaining files)</p></div>\n";
-                continue;
+            $lvl = self::LEVELS[$levelNum];
+            $output .= "<div class=\"sidebar-card\">\n";
+            $output .= "<div class=\"sidebar-card-header level-{$levelNum}\">\n";
+            $output .= "<span class=\"indicator\"></span>\n";
+            $output .= "{$lvl['name']}\n";
+            $output .= "<span class=\"count\">{$count}</span>\n";
+            $output .= "</div>\n";
+            $output .= "<div class=\"sidebar-file-list\">\n";
+            foreach ($this->grouped[$levelNum] as $file) {
+                $shortPath = (string) preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
+                $id = (string) preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
+                $output .= '<a href="#file-' . $id . '" class="sidebar-file-item">' . htmlspecialchars($shortPath, ENT_QUOTES, 'UTF-8') . "</a>\n";
             }
 
-            $fileLinks = array_map(static function (array $f): string {
-                $shortPath = (string) preg_replace('#^(.*/)?src/(Resource/)?#', '', $f['path']);
-                $id = (string) preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
-
-                return '<a href="#file-' . $id . '">' . htmlspecialchars($shortPath) . '</a>';
-            }, $this->grouped[$levelNum]);
-            $output .= '<div class="file-list">' . implode(', ', $fileLinks) . "</div></div>\n";
+            $output .= "</div>\n";
+            $output .= "</div>\n";
         }
+
+        $output .= "</aside>\n";
 
         return $output;
     }
 
-    private function buildHtmlDetails(): string
+    private function buildHtmlContent(): string
     {
-        $detailFiles = array_merge($this->grouped[4], $this->grouped[3], $this->grouped[2]);
-        if (empty($detailFiles)) {
-            return '';
-        }
-
-        $issuesByType = $this->collectIssuesByType($detailFiles);
-        uasort($issuesByType, static fn (array $a, array $b): int => count($b) <=> count($a));
-
-        $output = "<h2>Details</h2>\n";
+        $output = "<main class=\"content\">\n";
+        $output .= "<div class=\"content-header\">\n";
+        $output .= "<h2 class=\"content-title\">Details</h2>\n";
         $output .= "<div class=\"view-toggle\">\n";
         $output .= "<button class=\"view-btn active\" data-view=\"files\" onclick=\"switchView('files')\">by Files</button>\n";
         $output .= "<button class=\"view-btn\" data-view=\"issues\" onclick=\"switchView('issues')\">by Issues</button>\n";
         $output .= "</div>\n";
+        $output .= "</div>\n";
 
-        $output .= $this->buildHtmlFileCards($detailFiles);
+        $detailFiles = array_merge($this->grouped[4], $this->grouped[3], $this->grouped[2]);
+        $issuesByType = $this->collectIssuesByType($detailFiles);
+        uasort($issuesByType, static fn (array $a, array $b): int => count($b) <=> count($a));
+
+        $output .= $this->buildHtmlFileTable($detailFiles);
         $output .= $this->buildHtmlIssueCards($issuesByType);
+        $output .= "</main>\n";
 
         return $output;
+    }
+
+    private function buildHtmlFooter(): string
+    {
+        return "<footer class=\"footer\">\n<a href=\"https://koriym.github.io/pasta-lunch/\" target=\"_blank\" rel=\"noopener noreferrer\">\u{1F35D} PASTA Lunch</a>\n</footer>\n";
     }
 
     /**
@@ -306,6 +346,7 @@ final class Report
 
                 $issuesByType[$metric][] = [
                     'path' => $shortPath,
+                    'fullPath' => $file['path'],
                     'value' => $issue['value'],
                     'line' => $issue['line'],
                     'level' => $issue['level'],
@@ -317,35 +358,50 @@ final class Report
     }
 
     /** @param list<array{path: string, maxLevel: int, issues: list<array{metric: string, value: int, line: int, level: int}>}> $detailFiles */
-    private function buildHtmlFileCards(array $detailFiles): string
+    private function buildHtmlFileTable(array $detailFiles): string
     {
         $output = "<div id=\"view-files\" class=\"view-section active\">\n";
+        $output .= "<div class=\"detail-table\">\n<table>\n<thead>\n<tr>\n";
+        $output .= "<th style=\"width: 100px;\">Level</th>\n<th>File</th>\n<th>Issues</th>\n";
+        $output .= "</tr>\n</thead>\n<tbody>\n";
+
         foreach ($detailFiles as $file) {
             $shortPath = (string) preg_replace('#^(.*/)?src/(Resource/)?#', '', $file['path']);
             $id = (string) preg_replace('/[^a-zA-Z0-9]/', '-', $shortPath);
             $lvl = self::LEVELS[$file['maxLevel']];
             $levelNum = $file['maxLevel'];
-            $output .= "<div class=\"detail-card\" id=\"file-{$id}\"><div class=\"detail-header\">";
-            $output .= '<span class="detail-path">' . htmlspecialchars($shortPath) . '</span>';
-            $output .= "<span class=\"badge badge-{$levelNum}\">{$lvl['emoji']} {$lvl['name']}</span></div>\n";
-            $output .= "<ul class=\"issue-list\">\n";
+
+            $output .= "<tr id=\"file-{$id}\">\n";
+            $output .= "<td class=\"level-cell\">\n";
+            $output .= "<span class=\"level-badge level-{$levelNum}\">{$lvl['name']}<span class=\"level-pasta\">{$lvl['emoji']}</span></span>\n";
+            $output .= "</td>\n";
+            $output .= "<td class=\"file-cell\">\n";
+            $output .= '<span class="path">' . htmlspecialchars($shortPath, ENT_QUOTES, 'UTF-8') . "</span>\n";
+            $output .= "</td>\n";
+            $output .= "<td class=\"issues-cell\">\n";
+
             foreach ($file['issues'] as $issue) {
                 if ($issue['level'] < 2) {
                     continue;
                 }
 
-                $threshold = Pasta::THRESHOLDS[$issue['metric']][0] ?? '?';
-                $lineInfo = $issue['line'] > 0 ? "<span class=\"metric-line\">:L{$issue['line']}</span>" : '';
+                $thresholds = $this->getThresholdsString($issue['metric']);
+                $lineInfo = $issue['line'] > 0 ? ":{$issue['line']}" : '';
+                $copyPath = htmlspecialchars($file['path'], ENT_QUOTES, 'UTF-8') . $lineInfo;
                 $metricLink = $this->getMetricLink($issue['metric'], 'html');
-                $output .= "<li class=\"issue-item\"><span class=\"metric-name\">{$metricLink}</span>: ";
-                $output .= "<span class=\"metric-value\">{$issue['value']}</span>";
-                $output .= "<span class=\"metric-threshold\">({$threshold})</span>{$lineInfo}</li>\n";
+                $displayValue = (string) $issue['value'];
+                $output .= "<div class=\"issue-row\">\n";
+                $output .= "<span class=\"issue-name\">{$metricLink}</span>\n";
+                $output .= "<span class=\"issue-value\">{$displayValue}</span>\n";
+                $output .= "<span class=\"issue-threshold\">({$thresholds})</span>\n";
+                $output .= "<span class=\"issue-copy\" onclick=\"copyPath(this, '{$copyPath}')\">" . self::COPY_ICON_SVG . "</span>\n";
+                $output .= "</div>\n";
             }
 
-            $output .= "</ul></div>\n";
+            $output .= "</td>\n</tr>\n";
         }
 
-        $output .= "</div>\n";
+        $output .= "</tbody>\n</table>\n</div>\n</div>\n";
 
         return $output;
     }
@@ -356,24 +412,32 @@ final class Report
         $output = "<div id=\"view-issues\" class=\"view-section\">\n";
         foreach ($issuesByType as $metric => $files) {
             $metricLink = $this->getMetricLink($metric, 'html');
-            $threshold = Pasta::THRESHOLDS[$metric][0] ?? '?';
+            $thresholds = $this->getThresholdsString($metric);
             $fileCount = count($files);
             usort($files, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
 
-            $output .= "<div class=\"issue-type-card\">\n";
+            $output .= "<div class=\"issue-type-section\">\n";
             $output .= "<div class=\"issue-type-header\">\n";
-            $output .= "<span class=\"issue-type-name\">{$metricLink} <span class=\"metric-threshold\">(threshold: {$threshold})</span></span>\n";
-            $output .= "<span class=\"issue-count\">{$fileCount} files</span>\n";
+            $output .= "<span class=\"issue-type-name\">{$metricLink}</span>\n";
+            $output .= "<span class=\"issue-type-meta\">threshold: {$thresholds} &middot; {$fileCount} files</span>\n";
             $output .= "</div>\n";
+            $output .= "<div class=\"issue-type-content\">\n";
             foreach ($files as $f) {
                 $lineInfo = $f['line'] > 0 ? ":L{$f['line']}" : '';
-                $output .= "<div class=\"file-item\">\n";
-                $output .= '<span class="file-item-path">' . htmlspecialchars($f['path']) . "{$lineInfo}</span>\n";
-                $output .= "<span class=\"file-item-value\">{$f['value']}</span>\n";
+                $copyPath = htmlspecialchars($f['fullPath'], ENT_QUOTES, 'UTF-8') . ($f['line'] > 0 ? ":{$f['line']}" : '');
+                $lvl = self::LEVELS[$f['level']];
+                $displayValue = (string) $f['value'];
+                $output .= "<div class=\"issue-file-row\">\n";
+                $output .= '<span class="issue-file-path">' . htmlspecialchars($f['path'], ENT_QUOTES, 'UTF-8') . "{$lineInfo}</span>\n";
+                $output .= "<span class=\"issue-file-right\">\n";
+                $output .= "<span class=\"issue-file-value\">{$displayValue}</span>\n";
+                $output .= "<span class=\"level-badge-mini level-{$f['level']}\">{$lvl['emoji']}</span>\n";
+                $output .= "<span class=\"issue-file-copy\" onclick=\"copyPath(this, '{$copyPath}')\">" . self::COPY_ICON_SVG . "</span>\n";
+                $output .= "</span>\n";
                 $output .= "</div>\n";
             }
 
-            $output .= "</div>\n";
+            $output .= "</div>\n</div>\n";
         }
 
         $output .= "</div>\n";

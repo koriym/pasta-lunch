@@ -91,6 +91,10 @@ final class Pasta
                 $filePath = $matches[1];
                 $lineNum = (int) $matches[2];
                 $metric = $matches[3];
+                if ($metric === 'DevelopmentCodeFragment') {
+                    continue;
+                }
+
                 $description = $matches[4];
                 $value = 0;
                 if (preg_match('/(\d+)/', $description, $numMatch)) {

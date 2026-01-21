@@ -55,10 +55,17 @@ Add to your project's `composer.json`:
 ```json
 {
     "scripts": {
-        "pasta": "bin/pasta",
-        "pasta:html": "bin/pasta --format=html"
+        "pasta": "bin/pasta src",
+        "pasta:html": "bin/pasta src --format=html"
     }
 }
+```
+
+Usage:
+
+```bash
+composer pasta
+composer pasta:html > report.html
 ```
 
 ## Spaghetti Levels
@@ -69,6 +76,10 @@ Add to your project's `composer.json`:
 | 🍝🍝 | Medio | Acceptable |
 | 🍝🍝🍝 | Grande | Refactoring required |
 | 🍝🍝🍝🍝 | Mamma Mia! | Unmaintainable |
+
+## Demo
+
+See [Sample Report](https://koriym.github.io/pasta-lunch/demo/report.html) for an example HTML output.
 
 ## Metrics
 

@@ -1,4 +1,13 @@
-:root {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🍝 Spaghetti Code Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>:root {
   --bg: #f8fafc;
   --bg-white: #ffffff;
   --border: #e2e8f0;
@@ -283,3 +292,143 @@ body {
 
 .footer a { color: var(--text-muted); text-decoration: none; }
 .footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header">
+<div class="header-left">
+<h1>🍝 PASTA</h1>
+<p class="subtitle">PHP Alert for Spaghetti Twisted Architecture</p>
+<p class="meta">Generated: 2026-01-21 01:26:29</p>
+</div>
+<div class="header-right">
+<div class="files-count">3</div>
+<div class="files-label">files analyzed</div>
+</div>
+</header>
+<section class="stats-row">
+<div class="stat-card level-4">
+<div class="label"><span class="pasta">🍝🍝🍝🍝</span> Mamma Mia!</div>
+<div class="value">0</div>
+<div class="detail">0.0% &middot; Unmaintainable</div>
+</div>
+<div class="stat-card level-3">
+<div class="label"><span class="pasta">🍝🍝🍝</span> Grande</div>
+<div class="value">0</div>
+<div class="detail">0.0% &middot; Refactoring required</div>
+</div>
+<div class="stat-card level-2">
+<div class="label"><span class="pasta">🍝🍝</span> Medio</div>
+<div class="value">1</div>
+<div class="detail">33.3% &middot; Acceptable</div>
+</div>
+<div class="stat-card level-1">
+<div class="label"><span class="pasta">🍝</span> Piccolo</div>
+<div class="value">2</div>
+<div class="detail">66.7% &middot; Clean code</div>
+</div>
+</section>
+<div class="main-grid">
+<aside class="sidebar">
+<div class="sidebar-card">
+<div class="sidebar-card-header level-2">
+<span class="indicator"></span>
+Medio
+<span class="count">1</span>
+</div>
+<div class="sidebar-file-list">
+<a href="#file-Report-php" class="sidebar-file-item">Report.php</a>
+</div>
+</div>
+</aside>
+<main class="content">
+<div class="content-header">
+<h2 class="content-title">Details</h2>
+<div class="view-toggle">
+<button class="view-btn active" data-view="files" onclick="switchView('files')">by Files</button>
+<button class="view-btn" data-view="issues" onclick="switchView('issues')">by Issues</button>
+</div>
+</div>
+<div id="view-files" class="view-section active">
+<div class="detail-table">
+<table>
+<thead>
+<tr>
+<th style="width: 100px;">Level</th>
+<th>File</th>
+<th>Issues</th>
+</tr>
+</thead>
+<tbody>
+<tr id="file-Report-php">
+<td class="level-cell">
+<span class="level-badge level-2">Medio<span class="level-pasta">🍝🍝</span></span>
+</td>
+<td class="file-cell">
+<span class="path">Report.php</span>
+</td>
+<td class="issues-cell">
+<div class="issue-row">
+<span class="issue-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-value">55</span>
+<span class="issue-threshold">(50:80:120)</span>
+<span class="issue-copy" onclick="copyPath(this, 'src/Report.php:29')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="view-issues" class="view-section">
+<div class="issue-type-section">
+<div class="issue-type-header">
+<span class="issue-type-name"><a href="https://koriym.github.io/pasta-lunch/issues/ja/excessive-class-complexity" target="_blank" rel="noopener noreferrer">ExcessiveClassComplexity</a></span>
+<span class="issue-type-meta">threshold: 50:80:120 &middot; 1 files</span>
+</div>
+<div class="issue-type-content">
+<div class="issue-file-row">
+<span class="issue-file-path">Report.php:L29</span>
+<span class="issue-file-right">
+<span class="issue-file-value">55</span>
+<span class="level-badge-mini level-2">🍝🍝</span>
+<span class="issue-file-copy" onclick="copyPath(this, 'src/Report.php:29')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/></svg></span>
+</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<footer class="footer">
+<a href="https://koriym.github.io/pasta-lunch/" target="_blank" rel="noopener noreferrer">🍝 PASTA Lunch</a>
+</footer>
+<div class="toast" id="toast"></div>
+<script>function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-view="' + view + '"]').classList.add('active');
+    document.getElementById('view-' + view).classList.add('active');
+}
+
+function copyPath(el, path) {
+    navigator.clipboard.writeText(path).then(() => {
+        var originalSvg = el.innerHTML;
+        el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>';
+        el.classList.add('copied');
+
+        var toast = document.getElementById('toast');
+        toast.textContent = path;
+        toast.classList.add('show');
+
+        setTimeout(function() {
+            el.innerHTML = originalSvg;
+            el.classList.remove('copied');
+            toast.classList.remove('show');
+        }, 1500);
+    });
+}
+</script>
+</body></html>

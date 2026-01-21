@@ -124,13 +124,13 @@ class ReportTest extends TestCase
         $this->assertStringContainsString('Spaghetti Code Detection', $html);
         $this->assertStringContainsString('view-files', $html);
         $this->assertStringContainsString('view-issues', $html);
-        $this->assertStringContainsString('level-section level-4', $html);
-        $this->assertStringContainsString('level-section level-3', $html);
-        $this->assertStringContainsString('level-section level-2', $html);
-        $this->assertStringContainsString('level-section level-1', $html);
-        $this->assertStringContainsString('detail-card', $html);
-        $this->assertStringContainsString('issue-type-card', $html);
-        $this->assertStringContainsString(':L10', $html);
+        $this->assertStringContainsString('stat-card level-4', $html);
+        $this->assertStringContainsString('stat-card level-3', $html);
+        $this->assertStringContainsString('stat-card level-2', $html);
+        $this->assertStringContainsString('stat-card level-1', $html);
+        $this->assertStringContainsString('detail-table', $html);
+        $this->assertStringContainsString('issue-type-section', $html);
+        $this->assertStringContainsString(':10', $html);
     }
 
     public function testToHtmlWithEmptyReport(): void
@@ -138,7 +138,8 @@ class ReportTest extends TestCase
         $report = $this->createEmptyReport();
         $html = $report->toHtml();
         $this->assertStringContainsString('<!DOCTYPE html>', $html);
-        $this->assertStringContainsString('0 files analyzed', $html);
+        $this->assertStringContainsString('files-count">0</div>', $html);
+        $this->assertStringContainsString('files analyzed', $html);
     }
 
     public function testToHtmlZeroTotalFiles(): void
@@ -146,7 +147,7 @@ class ReportTest extends TestCase
         $grouped = [4 => [], 3 => [], 2 => [], 1 => []];
         $report = new Report(0, $grouped, 'https://example.com/docs/');
         $html = $report->toHtml();
-        $this->assertStringContainsString('(0.0%)', $html);
+        $this->assertStringContainsString('0.0%', $html);
     }
 
     public function testUnknownMetricInThresholds(): void
