@@ -23,7 +23,3 @@ lang: ja
 - [ExcessiveParameterList](excessive-parameter-list) - パラメータが多すぎる
 - [TooManyFields](too-many-fields) - クラスのフィールドが多すぎる
 - [TooManyPublicMethods](too-many-public-methods) - 公開メソッドが多すぎる
-
-## デバッグコード
-
-- [DevelopmentCodeFragment](development-code-fragment) - 本番環境にデバッグコードが残っている

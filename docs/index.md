@@ -30,10 +30,6 @@ Detect spaghetti code using PHPMD metrics.
 - [TooManyFields](issues/en/too-many-fields) - Class has too many fields
 - [TooManyPublicMethods](issues/en/too-many-public-methods) - Class exposes too many methods
 
-### Debug Code
-
-- [DevelopmentCodeFragment](issues/en/development-code-fragment) - Debug code left in production
-
 ## Installation
 
 ```bash
