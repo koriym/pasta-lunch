@@ -151,9 +151,9 @@ body {
 .detail-table tr:last-child td { border-bottom: none; }
 .detail-table tr:hover { background: #fafbfc; }
 
-.level-cell { width: 100px; }
+.level-cell { width: 140px; }
 
-.level-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+.level-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 6px 10px; border-radius: 4px; white-space: nowrap; }
 .level-badge.level-4 { background: var(--critical-light); color: var(--critical); }
 .level-badge.level-3 { background: var(--warning-light); color: var(--warning); }
 .level-badge.level-2 { background: var(--caution-light); color: var(--caution); }
