@@ -156,10 +156,10 @@ final class Report
                 $output .= "### {$shortPath} {$lvl['emoji']} {$lvl['name']}\n\n**Issues:**\n";
                 foreach ($file['issues'] as $issue) {
                     if ($issue['level'] >= 2) {
-                        $threshold = Pasta::THRESHOLDS[$issue['metric']][0] ?? '?';
+                        $thresholds = $this->getThresholdsString($issue['metric']);
                         $lineInfo = $issue['line'] > 0 ? ":L{$issue['line']}" : '';
                         $metricLink = $this->getMetricLink($issue['metric'], 'md');
-                        $output .= "- {$metricLink}: {$issue['value']}({$threshold}){$lineInfo}\n";
+                        $output .= "- {$metricLink}: {$issue['value']}({$thresholds}){$lineInfo}\n";
                     }
                 }
 
